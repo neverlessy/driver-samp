@@ -1,6 +1,6 @@
 script_name("Driver")
 script_authors("neverlessy")
-script_version("1.1")
+script_version("1.2")
 
 require "lib.moonloader"
 require 'sampfuncs'
