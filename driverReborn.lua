@@ -1,4 +1,4 @@
----@diagnostic disable: undefined-global, lowercase-global, redundant-parameter
+---@diagnostic disable: undefined-global, lowercase-global, redundant-parameter, redundant-value
 
 local e = require 'samp.events'
 local m = require 'mimgui'
@@ -6,32 +6,25 @@ local enc = require 'encoding'
 local wm = require 'windows.message'
 local vkeys = require 'vkeys'
 local ffi = require 'ffi'
+local inicfg = require 'inicfg'
 
 script_name('Driver Reborn')
 script_authors('Moon Glance', 'neverlessy')
-script_version('1.3.2')
-script_description('All rights reserved. © Moon Glance 2022')
+script_version('1.3.3')
+script_version_number(2211)
+script_description('All rights reserved. В© Moon Glance 2022')
 
---  Объявление переменных для удобства кода согласно moongl.ru/coderules
+--  РћР±СЉСЏРІР»РµРЅРёРµ РїРµСЂРµРјРµРЅРЅС‹С… РґР»СЏ СѓРґРѕР±СЃС‚РІР° РєРѕРґР° СЃРѕРіР»Р°СЃРЅРѕ moongl.ru/coderules
 local new, v2, v4, cupoX, cupoY, chatMessage, flags = m.new, m.ImVec2, m.ImVec4, m.SetCursorPosX, m.SetCursorPosY, sampAddChatMessage, m.WindowFlags
 
--- Объявление других переменных
+-- РћР±СЉСЏРІР»РµРЅРёРµ РґСЂСѓРіРёС… РїРµСЂРµРјРµРЅРЅС‹С…
 enc.default = 'CP1251'
 local u8 = enc.UTF8
-local driverMenu, widgetMenu = new.bool(), new.bool()
-local settingsAutoTrailerBool, settingsWidgetBool, settingsAutoEatBool, settingsPipBool, settingsEngineControlBool, settingsTimerArendaBool, settingsAutoBuyBool, settingsAutoFillBool, settingsAutoBrakeBool, settingsAutoDomkratBool, settingsAutoSlagboumBool, settingsAutoReportBool, settingsPipFillBool, settingsPipFuelBool, settingsPipBoxBool = new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()
-local sliderRepairCount, sliderFillCount, sliderDomkratCount = new.int(5), new.int(5), new.int(5)
-local menuType = {false, true, false, false}
-local eatType = {false, true, false}
-local fillType = {true, false, false}
-local trailerType = {false, true, false}
-local loadDriverStatus = ''
-local widgetTransparrent = new.float(1.00)
-local dPlayers, dPlayerNick, dPlayerId, dPlayerNumber = {}, {}, {}, {}
-local widgetLinks = {new.bool(true), new.bool(true), new.bool(true), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()}
 local str, sizeof = ffi.string, ffi.sizeof
-local sendReportText = new.char[85](u8"Я попал в воду! Помогите!")
--- Код
+local driverMenu, widgetMenu, settingsAutoTrailerBool, settingsWidgetBool, settingsAutoEatBool, settingsPipBool, settingsEngineControlBool, settingsTimerArendaBool, settingsAutoBuyBool, settingsAutoFillBool, settingsAutoBrakeBool, settingsAutoDomkratBool, settingsAutoSlagboumBool, settingsAutoReportBool, settingsPipFillBool, settingsPipFuelBool, settingsPipBoxBool, settingsOffChatBool = new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()
+local widgetLinks, menuType, eatType, fillType, trailerType, widgetShowType, dPlayers, dPlayerNick, dPlayerId, dPlayerNumber = {new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()}, {true, false, false, false, false}, {false, true, false}, {true, false, false}, {false, true, false}, {true, false, false}, {}, {}, {}, {}
+local widgetTransparrent, sendReportText, sliderRepairCount, sliderFillCount, sliderDomkratCount, loadDriverStatus = new.float(1.00), new.char[85](u8"РЇ РїРѕРїР°Р» РІ РІРѕРґСѓ! РџРѕРјРѕРіРёС‚Рµ!"), new.int(5), new.int(5), new.int(5), ''
+-- РљРѕРґ
 
 local driverWidgetMenuFrame = m.OnFrame(
     function() return widgetMenu[0] end,
@@ -46,34 +39,34 @@ local driverWidgetMenuFrame = m.OnFrame(
             m.CenterText(u8"RoadTrain") m.Separator()
                 m.BeginChild('WidgetMenu', v2(240, checkSizeWidget()), false)
                 if widgetLinks[1][0] then
-                    m.CenterText(u8"Взвешивание: Нет маршрута")
+                    m.CenterText(u8"Р’Р·РІРµС€РёРІР°РЅРёРµ: РќРµС‚ РјР°СЂС€СЂСѓС‚Р°")
                 end
                 if widgetLinks[2][0] then
-                    m.CenterText(u8"Заработок: 0$")
+                    m.CenterText(u8"Р—Р°СЂР°Р±РѕС‚РѕРє: 0$")
                 end
                 if widgetLinks[3][0] then
-                    m.CenterText(u8"Маршрут: Нет маршрута")
+                    m.CenterText(u8"РњР°СЂС€СЂСѓС‚: РќРµС‚ РјР°СЂС€СЂСѓС‚Р°")
                 end
                 if widgetLinks[4][0] then
-                    m.CenterText(u8"Рейсов за сессию: 0")
+                    m.CenterText(u8"Р РµР№СЃРѕРІ Р·Р° СЃРµСЃСЃРёСЋ: 0")
                 end
                 if widgetLinks[5][0] then
-                    m.CenterText(u8"Ларцов за сессию: 0")
+                    m.CenterText(u8"Р›Р°СЂС†РѕРІ Р·Р° СЃРµСЃСЃРёСЋ: 0")
                 end
                 if widgetLinks[6][0] then
-                    m.CenterText(u8"Всего ларцов: 0")
+                    m.CenterText(u8"Р’СЃРµРіРѕ Р»Р°СЂС†РѕРІ: 0")
                 end
                 if widgetLinks[7][0] then
-                    m.CenterText(u8"Всего рейсов: 0")
+                    m.CenterText(u8"Р’СЃРµРіРѕ СЂРµР№СЃРѕРІ: 0")
                 end
                 if widgetLinks[8][0] then
-                    m.CenterText(u8"Времени в рейсах: 00:00:00")
+                    m.CenterText(u8"Р’СЂРµРјРµРЅРё РІ СЂРµР№СЃР°С…: 00:00:00")
                 end
                 if widgetLinks[9][0] then
-                    m.CenterText(u8"Времени в рейсах всего: 00:00:00")
+                    m.CenterText(u8"Р’СЂРµРјРµРЅРё РІ СЂРµР№СЃР°С… РІСЃРµРіРѕ: 00:00:00")
                 end
                 if widgetLinks[10][0] then
-                    m.CenterText(u8"Навык дальнобойщика: 0")
+                    m.CenterText(u8"РќР°РІС‹Рє РґР°Р»СЊРЅРѕР±РѕР№С‰РёРєР°: 0")
                 end
                 m.EndChild()
             m.Text('', cupoY(checkSizeWidget() + 10))
@@ -92,19 +85,22 @@ local driverMenuFrame = m.OnFrame(
         m.SetNextWindowSize(v2(750, 400), m.Cond.FirstUseEver)
         m.Begin("Main Window", driverMenu, flags.NoResize + flags.NoCollapse + flags.NoScrollbar + flags.NoTitleBar)
             m.BeginChild('#MenuBar', v2(200, 390), false)
-                if m.ButtonActivated(menuType[1], u8"О скрипте", v2(200, 50), cupoX(0)) then
+                if m.ButtonActivated(menuType[1], u8"Рћ СЃРєСЂРёРїС‚Рµ", v2(200, 50), cupoX(0)) then
                     switchMenu(1)
                 end
-                if m.ButtonActivated(menuType[2], u8"Настройки", v2(200, 50), cupoX(0)) then
+                if m.ButtonActivated(menuType[2], u8"РќР°СЃС‚СЂРѕР№РєРё", v2(200, 50), cupoX(0)) then
                     switchMenu(2)
                 end
-                if m.ButtonActivated(menuType[3], u8"Лог рейсов", v2(200, 50), cupoX(0)) then
+                if m.ButtonActivated(menuType[3], u8"Р›РѕРі СЂРµР№СЃРѕРІ", v2(200, 50), cupoX(0))  then
                     switchMenu(3)
                 end
-                if m.ButtonActivated(menuType[4], u8"Дальнобойщики онлайн", v2(200, 50), cupoX(0)) then
+                if m.ButtonActivated(menuType[4], u8"Р”Р°Р»СЊРЅРѕР±РѕР№С‰РёРєРё РѕРЅР»Р°Р№РЅ", v2(200, 50), cupoX(0)) then
                     switchMenu(4)
                 end
-                if m.Button(u8"Закрыть", v2(200, 50), cupoX(0), cupoY(340)) then
+                if m.ButtonActivated(menuType[5], u8"РџР°С‚С‡РЅРѕСѓС‚", v2(97, 50), cupoX(102), cupoY(340)) then
+                    switchMenu(5)
+                end
+                if m.Button(u8"Р—Р°РєСЂС‹С‚СЊ", v2(97, 50), cupoX(0), cupoY(340)) then
                     if menuType[4] then
                         switchMenu(1)
                     end
@@ -113,10 +109,100 @@ local driverMenuFrame = m.OnFrame(
                 
             m.EndChild() m.SameLine()
             m.BeginChild('#Content', v2(535, 390), false)
+                if menuType[1] then
+                    m.Image(logoDriver, v2(300, 300), cupoX(120))
+                    m.CenterText(u8'РђРІС‚РѕСЂ: Moon Glance (neverlessy)')
+                    m.CenterText(u8'РўРµРєСѓС‰Р°СЏ РІРµСЂСЃРёСЏ: 1.3.3')
+                    m.CenterText(u8'РўРµРєСѓС‰РёР№ Р±РёР»Рґ: 2211')
+                end
+                if menuType[2] then
+                    m.Checkbox(u8" РџРѕРєР°Р· РІРёРґР¶РµС‚Р°", settingsWidgetBool)
+                        if settingsWidgetBool[0] then
+                            if m.Button(u8"РќР°СЃС‚СЂРѕР№РєРё РІРёРґР¶РµС‚Р°", v2(150,30), cupoX(25)) then
+                                m.OpenPopup('widgetSettings')
+                            end
+                            m.Text(u8"Р РµР¶РёРј СЂР°Р±РѕС‚С‹ РІРёРґР¶РµС‚Р°", cupoX(25))
+                            if m.ButtonActivated(widgetShowType[1], u8"Р’СЃРµРіРґР°", v2(150,30), cupoX(25)) then
+                                switchShowWidgetType(1)
+                            end m.SameLine()
+                            if m.ButtonActivated(widgetShowType[2], u8"Р’ РіСЂСѓР·РѕРІРёРєРµ", v2(150,30)) then
+                                switchShowWidgetType(2)
+                            end m.SameLine()
+                            if m.ButtonActivated(widgetShowType[3], u8"Р’ СЂРµР№СЃРµ", v2(150,30)) then
+                                switchShowWidgetType(3)
+                            end
+                        end
+                    m.Checkbox(u8" РђРІС‚РѕРјР°С‚РёС‡РµСЃРєР°СЏ РµРґР°", settingsAutoEatBool)
+                        if settingsAutoEatBool[0] then
+                            if m.ButtonActivated(eatType[1], u8"РћР»РµРЅРёРЅР°", v2(150,30), cupoX(25)) then
+                                switchEatType(1)
+                            end m.SameLine()
+                            if m.ButtonActivated(eatType[2], u8"Р С‹Р±Р°", v2(150,30)) then
+                                switchEatType(2)
+                            end m.SameLine()
+                            if m.ButtonActivated(eatType[3], u8"Р§РёРїСЃС‹", v2(150,30)) then
+                                switchEatType(3)
+                            end
+                        end
+                    if m.Checkbox(u8" РљРѕРЅС‚СЂРѕР»СЊ РґРІРёРіР°С‚РµР»СЏ", settingsEngineControlBool) then
+                        
+                    end
+                    m.Checkbox(u8" Р—РІСѓРєРѕРІРѕРµ СЃРѕРїСЂРѕРІРѕР¶РґРµРЅРёРµ", settingsPipBool)
+                        if settingsPipBool[0] then
+                            m.Checkbox(u8" Р•СЃР»Рё СЂСЏРґРѕРј РµСЃС‚СЊ Р·Р°РїСЂР°РІРєР°", settingsPipFillBool, cupoX(25))
+                            m.Checkbox(u8" Р•СЃР»Рё РјР°Р»Рѕ Р±РµРЅР·РёРЅР°", settingsPipFuelBool, cupoX(25))
+                            m.Checkbox(u8" Р•СЃР»Рё РІС‹РїР°Р» Р»Р°СЂРµС†", settingsPipBoxBool, cupoX(25))
+                        end
+                    m.Checkbox(u8" РўР°Р№РјРµСЂ Р°СЂРµРЅРґС‹", settingsTimerArendaBool)
+                        if settingsTimerArendaBool[0] then
+                            m.Button(u8"РќР°СЃС‚СЂРѕР№РєРё С‚Р°Р№РјРµСЂР°", v2(150,30), cupoX(25))
+                        end
+                    m.Checkbox(u8" Р—Р°РєСѓРїРєР°", settingsAutoBuyBool)
+                        if settingsAutoBuyBool[0] then
+                            m.SliderInt(u8' РќР°Р±РѕСЂС‹ РїРѕС‡РёРЅРєРё', sliderRepairCount, 1, 15, cupoX(25))
+                            m.SliderInt(u8' РљР°РЅРёСЃС‚СЂС‹', sliderFillCount, 1, 15, cupoX(25))
+                            m.SliderInt(u8' Р”РѕРјРєСЂР°С‚С‹', sliderDomkratCount, 1, 15, cupoX(25))
+                            --sliderRepairCount, sliderFillCount, sliderDomkratCount
+                        end
+                    m.Checkbox(u8" Р—Р°РїСЂР°РІРєР°", settingsAutoFillBool)
+                    if settingsAutoFillBool[0] then
+                        if m.ButtonActivated(fillType[1], u8"РђР-92", v2(150,30), cupoX(25)) then
+                            switchFillType(1)
+                        end m.SameLine()
+                        if m.ButtonActivated(fillType[2], u8"РђР-95", v2(150,30)) then
+                            switchFillType(2)
+                        end m.SameLine()
+                        if m.ButtonActivated(fillType[3], u8"РђР-98", v2(150,30)) then
+                            switchFillType(3)
+                        end
+                    end
+                    m.Checkbox(u8" РўРѕСЂРјРѕР·", settingsAutoBrakeBool)
+                    m.Checkbox(u8" Р”РѕРјРєСЂР°С‚", settingsAutoDomkratBool)
+                    m.Checkbox(u8" РЁР»Р°РіР±Р°СѓРј", settingsAutoSlagboumBool)
+                    m.Checkbox(u8" РџСЂРёС†РµРї", settingsAutoTrailerBool)
+                        if settingsAutoTrailerBool[0] then
+                            if m.ButtonActivated(trailerType[1], u8"РўРѕРїР»РёРІРѕ", v2(150,30), cupoX(25)) then
+                                switchTrailerType(1)
+                            end m.SameLine()
+                            if m.ButtonActivated(trailerType[2], u8"РћСЂСѓР¶РёРµ", v2(150,30)) then
+                                switchTrailerType(2)
+                            end m.SameLine()
+                            if m.ButtonActivated(trailerType[3], u8"РџСЂРѕРґСѓРєС‚С‹", v2(150,30)) then
+                                switchTrailerType(3)
+                            end
+                        end
+                    m.Checkbox(u8" Р РµРїРѕСЂС‚ РїСЂРё РїРѕРїР°РґР°РЅРёРё РІ РІРѕРґСѓ", settingsAutoReportBool)
+                        if settingsAutoReportBool[0] then
+                            --m.Button(u8"РР·РјРµРЅРёС‚СЊ С‚РµРєСЃС‚", v2(150,30), cupoX(25))
+                            m.InputText(u8" - РўРµРєСЃС‚ РїСЂРё РїРѕРїР°РґР°РЅРёРё", sendReportText, sizeof(sendReportText), cupoX(25))
+                        end
+                    m.Checkbox(u8' РћС‚РєР»СЋС‡РёС‚СЊ С‡Р°С‚ РґР°Р»СЊРЅРѕР±РѕР№С‰РёРєРѕРІ', settingsOffChatBool)
+                end
                 if menuType[4] then
+                    displayRadar(true)
                     if dPlayers[2] == nil then
                         m.PushFont(fonts[25])
-                            m.CenterText(u8"Загрузка", cupoY(150))
+                            m.CenterText(u8"Р—Р°РіСЂСѓР·РєР°", cupoY(150))
                         m.PopFont()
                         m.PushFont(fonts[15])
                             m.CenterText(u8''..loadDriverStatus)
@@ -129,9 +215,9 @@ local driverMenuFrame = m.OnFrame(
                             m.SetColumnWidth(2, 250)
                             m.Text(u8'ID')
                             m.NextColumn()
-                            m.CenterColumnText(u8'Никнейм')
+                            m.CenterColumnText(u8'РќРёРєРЅРµР№Рј')
                             m.NextColumn()
-                            m.CenterColumnText(u8'Номер телефона')
+                            m.CenterColumnText(u8'РќРѕРјРµСЂ С‚РµР»РµС„РѕРЅР°')
                             for i = 2, #dPlayers do
                                 if dPlayerNick[i] ~= nil then
                                     m.NextColumn()
@@ -145,95 +231,31 @@ local driverMenuFrame = m.OnFrame(
                         m.EndChild()
                     end
                 end
-                if menuType[2] then
-                    m.Checkbox(u8" Показ виджета", settingsWidgetBool)
-                        if settingsWidgetBool[0] then
-                            if m.Button(u8"Настройки виджета", v2(150,30), cupoX(25)) then
-                                m.OpenPopup('widgetSettings')
-                                
-                            end
-                        end
-                    m.Checkbox(u8" Автоматическая еда", settingsAutoEatBool)
-                        if settingsAutoEatBool[0] then
-                            if m.ButtonActivated(eatType[1], u8"Оленина", v2(150,30), cupoX(25)) then
-                                switchEatType(1)
-                            end m.SameLine()
-                            if m.ButtonActivated(eatType[2], u8"Рыба", v2(150,30)) then
-                                switchEatType(2)
-                            end m.SameLine()
-                            if m.ButtonActivated(eatType[3], u8"Чипсы", v2(150,30)) then
-                                switchEatType(3)
-                            end
-                        end
-                    if m.Checkbox(u8" Контроль двигателя", settingsEngineControlBool) then
-                        
-                    end
-                    m.Checkbox(u8" Звуковое сопровождение", settingsPipBool)
-                        if settingsPipBool[0] then
-                            m.Checkbox(u8" Если рядом есть заправка", settingsPipFillBool, cupoX(25))
-                            m.Checkbox(u8" Если мало бензина", settingsPipFuelBool, cupoX(25))
-                            m.Checkbox(u8" Если выпал ларец", settingsPipBoxBool, cupoX(25))
-                        end
-                    m.Checkbox(u8" Таймер аренды", settingsTimerArendaBool)
-                        if settingsTimerArendaBool[0] then
-                            m.Button(u8"Настройки таймера", v2(150,30), cupoX(25))
-                        end
-                    m.Checkbox(u8" Закупка", settingsAutoBuyBool)
-                        if settingsAutoBuyBool[0] then
-                            m.SliderInt(u8' Наборы починки', sliderRepairCount, 1, 15, cupoX(25))
-                            m.SliderInt(u8' Канистры', sliderFillCount, 1, 15, cupoX(25))
-                            m.SliderInt(u8' Домкраты', sliderDomkratCount, 1, 15, cupoX(25))
-                            --sliderRepairCount, sliderFillCount, sliderDomkratCount
-                        end
-                    m.Checkbox(u8" Заправка", settingsAutoFillBool)
-                    if settingsAutoFillBool[0] then
-                        if m.ButtonActivated(fillType[1], u8"АИ-92", v2(150,30), cupoX(25)) then
-                            switchFillType(1)
-                        end m.SameLine()
-                        if m.ButtonActivated(fillType[2], u8"АИ-95", v2(150,30)) then
-                            switchFillType(2)
-                        end m.SameLine()
-                        if m.ButtonActivated(fillType[3], u8"АИ-98", v2(150,30)) then
-                            switchFillType(3)
-                        end
-                    end
-                    m.Checkbox(u8" Тормоз", settingsAutoBrakeBool)
-                    m.Checkbox(u8" Домкрат", settingsAutoDomkratBool)
-                    m.Checkbox(u8" Шлагбаум", settingsAutoSlagboumBool)
-                    m.Checkbox(u8" Прицеп", settingsAutoTrailerBool)
-                        if settingsAutoTrailerBool[0] then
-                            if m.ButtonActivated(trailerType[1], u8"Топливо", v2(150,30), cupoX(25)) then
-                                switchTrailerType(1)
-                            end m.SameLine()
-                            if m.ButtonActivated(trailerType[2], u8"Оружие", v2(150,30)) then
-                                switchTrailerType(2)
-                            end m.SameLine()
-                            if m.ButtonActivated(trailerType[3], u8"Продукты", v2(150,30)) then
-                                switchTrailerType(3)
-                            end
-                        end
-                    m.Checkbox(u8" Репорт при попадании в воду", settingsAutoReportBool)
-                        if settingsAutoReportBool[0] then
-                            --m.Button(u8"Изменить текст", v2(150,30), cupoX(25))
-                            m.InputText(u8" - Текст при попадании", sendReportText, sizeof(sendReportText), cupoX(25))
-                        end
+                if menuType[5] then
+                    m.PushFont(fonts[25])
+                        m.CenterText(u8"РћР±РЅРѕРІР»РµРЅРёРµ 1.3.2", cupoY(5))
+                    m.PopFont()
+                    m.PushFont(fonts[15])
+                        m.Text(u8"- РЎРєСЂРёРїС‚ РїРµСЂРµРїРёСЃР°РЅ СЃ РЅСѓР»СЏ\n- РћР±РЅРѕРІР»РµРЅРѕ С‡С‚Рѕ-С‚Рѕ С‚Р°Рј", cupoX(15))
+                    m.PopFont()
                 end
                 if m.BeginPopup('widgetSettings') then
                         m.BeginChild('#Popip', v2(250, 305), false)
-                            m.Button(u8"Изменить положение", v2(250, 30))
-                            if m.Checkbox(u8" Взвешивание", widgetLinks[1]) or
-                            m.Checkbox(u8" Заработок", widgetLinks[2]) or
-                            m.Checkbox(u8" Маршрут", widgetLinks[3]) or
-                            m.Checkbox(u8" Рейсы за сессию", widgetLinks[4]) or
-                            m.Checkbox(u8" Ларцы за сессию", widgetLinks[5]) or
-                            m.Checkbox(u8" Всего ларцов", widgetLinks[6]) or
-                            m.Checkbox(u8" Всего рейсов", widgetLinks[7]) or
-                            m.Checkbox(u8" Времени в рейсах", widgetLinks[8]) or
-                            m.Checkbox(u8" Времени в рейсах всего", widgetLinks[9]) or
-                            m.Checkbox(u8" Навык дальнобойщика", widgetLinks[10]) then
+                            m.Button(u8"РР·РјРµРЅРёС‚СЊ РїРѕР»РѕР¶РµРЅРёРµ", v2(250, 30))
+                            m.SliderFloat(u8' РџСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ РІРёРґР¶РµС‚Р°', widgetTransparrent, 0.00, 1.00)
+                            if m.Checkbox(u8" Р’Р·РІРµС€РёРІР°РЅРёРµ", widgetLinks[1]) or
+                            m.Checkbox(u8" Р—Р°СЂР°Р±РѕС‚РѕРє", widgetLinks[2]) or
+                            m.Checkbox(u8" РњР°СЂС€СЂСѓС‚", widgetLinks[3]) or
+                            m.Checkbox(u8" Р РµР№СЃС‹ Р·Р° СЃРµСЃСЃРёСЋ", widgetLinks[4]) or
+                            m.Checkbox(u8" Р›Р°СЂС†С‹ Р·Р° СЃРµСЃСЃРёСЋ", widgetLinks[5]) or
+                            m.Checkbox(u8" Р’СЃРµРіРѕ Р»Р°СЂС†РѕРІ", widgetLinks[6]) or
+                            m.Checkbox(u8" Р’СЃРµРіРѕ СЂРµР№СЃРѕРІ", widgetLinks[7]) or
+                            m.Checkbox(u8" Р’СЂРµРјРµРЅРё РІ СЂРµР№СЃР°С…", widgetLinks[8]) or
+                            m.Checkbox(u8" Р’СЂРµРјРµРЅРё РІ СЂРµР№СЃР°С… РІСЃРµРіРѕ", widgetLinks[9]) or
+                            m.Checkbox(u8" РќР°РІС‹Рє РґР°Р»СЊРЅРѕР±РѕР№С‰РёРєР°", widgetLinks[10]) then
+                                saveConfig()
                                 checkSizeWidget()
                             end
-                            m.SliderFloat(u8' Прозрачность виджета', widgetTransparrent, 0.00, 1.00)
                         m.EndChild()
                     m.EndPopup()
                 end
@@ -283,12 +305,13 @@ function checkSizeWidget()
 end
 
 function switchMenu(newMenu)
-    for i = 1, 4 do
+    for i = 1, 5 do
         if i ~= newMenu then
             menuType[i] = false
         end
     end
     menuType[newMenu] = true
+    saveConfig()
 end
 
 function switchEatType(newEatType)
@@ -298,6 +321,7 @@ function switchEatType(newEatType)
         end
     end
     eatType[newEatType] = true
+    saveConfig()
 end
 
 function switchFillType(newFillType)
@@ -307,6 +331,7 @@ function switchFillType(newFillType)
         end
     end
     fillType[newFillType] = true
+    saveConfig()
 end
 
 function switchTrailerType(newTrailerType)
@@ -316,7 +341,18 @@ function switchTrailerType(newTrailerType)
         end
     end
     trailerType[newTrailerType] = true
+    saveConfig()
 end
+
+function switchShowWidgetType(newWidgetType)
+    for i = 1, 3 do
+        if i ~= newWidgetType then
+            widgetShowType[i] = false
+        end
+    end
+    widgetShowType[newWidgetType] = true
+    saveConfig()
+end 
 
 function moonVec4(numberhex)
     a, r, g, b = tonumber(string.sub(numberhex, 1, 2), 16) / 255, tonumber(string.sub(numberhex, 3, 4), 16) / 255, tonumber(string.sub(numberhex, 5, 6), 16) / 255, tonumber(string.sub(numberhex, 7, 8), 16) / 255
@@ -335,16 +371,18 @@ m.OnInitialize(function()
         [25] = m.GetIO().Fonts:AddFontFromFileTTF(getWorkingDirectory()..'/resource/Driver/fonts/RFB.ttf', 18.0, nil, glyph_ranges),
         [50] = m.GetIO().Fonts:AddFontFromFileTTF(getWorkingDirectory()..'/resource/Driver/fonts/SFDR.otf', 50.0, nil, glyph_ranges)
     }
+    logoDriver = m.CreateTextureFromFile("moonloader/resource/Driver/driver.png")
     m.GetIO().IniFilename = nil
 end)
 
 function main()
     if not isSampfuncsLoaded() or not isSampLoaded() then return end
     while not isSampAvailable() do wait(0) end
-    sampAddChatMessage('Загружен', -1)
+    sampAddChatMessage('Р—Р°РіСЂСѓР¶РµРЅ', -1)
     driverMenu[0] = not driverMenu[0]
     updateReport()
     updateDriverPlayers()
+    loadConfig()
     while true do wait(0)
         if settingsWidgetBool[0] then
             widgetMenu[0] = true
@@ -359,9 +397,11 @@ function updateDriverPlayers()
     lua_thread.create(function()
         while true do wait(0)
             if menuType[4] then
-                loadDriverStatus = u8'Устанавливаю связь с космосом'
+                loadDriverStatus = u8'РЈСЃС‚Р°РЅР°РІР»РёРІР°СЋ СЃРІСЏР·СЊ СЃ РєРѕСЃРјРѕСЃРѕРј'
                 sampSendChat("/phone")
-                wait(5000)
+                wait(500)
+                sampSendChat("/phone")
+                wait(4500)
             end
         end
     end)
@@ -385,14 +425,36 @@ function e.onShowTextDraw(id, data)
         sampSendClickTextdraw(id)
         data.position.y = 100000.0
         return {id, data}
-    else
+    elseif menuType[4] then
         return false
     end
 end
 
+function e.onPlaySound(soundId, position)
+    if soundId == 17803 and menuType[4] then
+        return false
+    end
+end
+
+function e.onServerMessage(color, text)
+    if text:find(".+ РґРѕСЃС‚Р°Р»%XР°%X .+ РёР· РєР°СЂРјР°РЅР°") and menuType[4] then
+        return false
+    end
+    if text:find("%[Р”Р°Р»СЊРЅРѕР±РѕР№С‰РёРє%] (.+)%[(%d+)%]%: (.+)") then
+        if settingsOffChatBool[0] then
+            return false
+        else
+            color = -10270721
+            local driverChatName, driverChatId, driverChatText = text:match("%[Р”Р°Р»СЊРЅРѕР±РѕР№С‰РёРє%] (.+)%[(%d+)%]%: (.+)")
+            text = text.gsub(text, '%[Р”Р°Р»СЊРЅРѕР±РѕР№С‰РёРє%] (.+)%[(%d+)%]%: (.+)', '{fb116c}[Р”Р°Р»СЊРЅРѕР±РѕР№] {ffffff}'..driverChatName..'['..driverChatId..']: {aeaeae}'..driverChatText)
+            return {color, text}
+        end
+    end
+end
+
 function e.onShowDialog(id, style, title, button1, button2, text)
-    if title:find("{%x+}Рабочие онлайн") and menuType[4] then
-        loadDriverStatus = u8'Уже почти...'
+    if title:find("{%x+}Р Р°Р±РѕС‡РёРµ РѕРЅР»Р°Р№РЅ") and menuType[4] then
+        loadDriverStatus = u8'РЈР¶Рµ РїРѕС‡С‚Рё...'
         dPlayers, dPlayerNick, dPlayerId, dPlayerNumber = {}, {}, {}, {}
         separator = '\n'
         for str in string.gmatch(text, "([^"..separator.."]+)") do
@@ -400,31 +462,150 @@ function e.onShowDialog(id, style, title, button1, button2, text)
         end
         for v = 2, 60 do
             if dPlayers[v] ~= nil then
-                dPlayerNick[v], dPlayerId[v], dPlayerNumber[v] = dPlayers[v]:match('{%x+}%d+. {%x+}Дальнобойщик (.+_.+)%X(%d+)%X	{%x+}(%d+)')
+                dPlayerNick[v], dPlayerId[v], dPlayerNumber[v] = dPlayers[v]:match('{%x+}%d+. {%x+}Р”Р°Р»СЊРЅРѕР±РѕР№С‰РёРє (.+_.+)%X(%d+)%X	{%x+}(%d+)')
             end
         end
         loadDriverStatus = ''
         sampSendDialogResponse(id, 0, -1, -1)
         return false
     end
-    if title:find("Меню") and menuType[4] then
+    if title:find("РњРµРЅСЋ") and menuType[4] then
         sampSendDialogResponse(id, 1 , 2, sampGetListboxItemText(2))
-        loadDriverStatus = u8'Взламываю пентагон'
+        loadDriverStatus = u8'Р’Р·Р»Р°РјС‹РІР°СЋ РїРµРЅС‚Р°РіРѕРЅ'
         return false
     end
-    if text:find("<< Дальнобойщики") and menuType[4] then
+    if text:find("<< Р”Р°Р»СЊРЅРѕР±РѕР№С‰РёРєРё") and menuType[4] then
         sampSendDialogResponse(id, 1 , 28, sampGetListboxItemText(28))
-        loadDriverStatus = u8'Открываю базу данных NASA'
-        sampSendChat("/phone")
+        loadDriverStatus = u8'РћС‚РєСЂС‹РІР°СЋ Р±Р°Р·Сѓ РґР°РЅРЅС‹С… NASA'
         return false
     end
-    if title:find("{%x+}{%x+}Репорт") and settingsAutoReportBool[0] then
+    if title:find("{%x+}{%x+}Р РµРїРѕСЂС‚") and settingsAutoReportBool[0] then
         sampSendDialogResponse(id, 1 , -1, u8:decode(str(sendReportText)))
         return false
     end
 end
 
--- Dark Theme для скрипта. Автор: chapo (https://www.blast.hk/members/112329/)
+-- Р§Р°СЃС‚СЊ РєРѕС„РёРіР°
+
+function loadConfig()
+    menuType = decodeJson(iniMain.settings.menuType)
+    eatType = decodeJson(iniMain.settings.eatType)
+    fillType = decodeJson(iniMain.settings.fillType)
+    trailerType = decodeJson(iniMain.settings.trailerType)
+    settingsWidgetBool[0] = iniMain.settings.settingsWidgetBool
+    settingsAutoEatBool[0] = iniMain.settings.settingsAutoEatBool
+    settingsPipBool[0] = iniMain.settings.settingsPipBool
+    settingsEngineControlBool[0] = iniMain.settings.settingsEngineControlBool
+    settingsTimerArendaBool[0] = iniMain.settings.settingsTimerArendaBool
+    settingsAutoBuyBool[0] = iniMain.settings.settingsAutoBuyBool
+    settingsAutoFillBool[0] = iniMain.settings.settingsAutoFillBool
+    settingsAutoBrakeBool[0] = iniMain.settings.settingsAutoBrakeBool
+    settingsAutoDomkratBool[0] = iniMain.settings.settingsAutoDomkratBool
+    settingsAutoSlagboumBool[0] = iniMain.settings.settingsAutoSlagboumBool
+    settingsAutoReportBool[0] = iniMain.settings.settingsAutoReportBool
+    settingsPipFillBool[0] = iniMain.settings.settingsPipFillBool
+    settingsPipFuelBool[0] = iniMain.settings.settingsPipFuelBool
+    settingsPipBoxBool[0] = iniMain.settings.settingsPipBoxBool
+    settingsOffChatBool[0] = iniMain.settings.settingsOffChatBool
+    sliderRepairCount[0] = iniMain.settings.sliderRepairCount
+    sliderFillCount[0] = iniMain.settings.sliderFillCount
+    settingsAutoTrailerBool[0] = iniMain.settings.settingsAutoTrailerBool
+    sliderDomkratCount[0] = iniMain.settings.sliderDomkratCount
+    m.StrCopy(sendReportText, iniMain.settings.sendReportText)
+    widgetTransparrent[0] = iniMain.settingsWidget.widgetTransparrent
+    widgetShowType = decodeJson(iniMain.settingsWidget.widgetShowType)
+
+    local widgetLinksLua = decodeJson(iniMain.settingsWidget.widgetLinks)
+    for i = 1, 10 do
+        widgetLinks[i][0] = widgetLinksLua[i]
+    end
+end
+
+function saveConfig()
+    iniMain.settings.menuType = encodeJson(menuType)
+    iniMain.settings.eatType = encodeJson(eatType)
+    iniMain.settings.fillType = encodeJson(fillType)
+    iniMain.settings.trailerType = encodeJson(trailerType)
+    iniMain.settings.settingsWidgetBool = settingsWidgetBool[0]
+    iniMain.settings.settingsAutoEatBool = settingsAutoEatBool[0]
+    iniMain.settings.settingsPipBool = settingsPipBool[0]
+    iniMain.settings.settingsEngineControlBool = settingsEngineControlBool[0]
+    iniMain.settings.settingsTimerArendaBool = settingsTimerArendaBool[0]
+    iniMain.settings.settingsAutoBuyBool = settingsAutoBuyBool[0]
+    iniMain.settings.settingsAutoFillBool = settingsAutoFillBool[0]
+    iniMain.settings.settingsAutoBrakeBool = settingsAutoBrakeBool[0]
+    iniMain.settings.settingsAutoDomkratBool = settingsAutoDomkratBool[0]
+    iniMain.settings.settingsAutoSlagboumBool = settingsAutoSlagboumBool[0]
+    iniMain.settings.settingsAutoReportBool = settingsAutoReportBool[0]
+    iniMain.settings.settingsPipFillBool = settingsPipFillBool[0]
+    iniMain.settings.settingsAutoTrailerBool = settingsAutoTrailerBool[0]
+    iniMain.settings.settingsPipFuelBool = settingsPipFuelBool[0]
+    iniMain.settings.settingsPipBoxBool = settingsPipBoxBool[0]
+    iniMain.settings.settingsOffChatBool = settingsOffChatBool[0]
+    iniMain.settings.sliderRepairCount = sliderRepairCount[0]
+    iniMain.settings.sliderFillCount = sliderFillCount[0]
+    iniMain.settings.sliderDomkratCount = sliderDomkratCount[0]
+    iniMain.settings.sendReportText = str(sendReportText)
+    iniMain.settingsWidget.widgetTransparrent =widgetTransparrent[0]
+    iniMain.settingsWidget.widgetShowType = encodeJson(widgetShowType)
+
+    local widgetLinksLuaSave = {}
+    for i = 1, 10 do
+        widgetLinksLuaSave[i] = widgetLinks[i][0]
+        if i == 10 then
+            iniMain.settingsWidget.widgetLinks = encodeJson(widgetLinksLuaSave)
+        end
+    end
+    inicfg.save(iniMain, iniDirectory)
+end
+
+local mainIni = inicfg.load({
+    driverStats =
+    {
+        totalTrailers = 0,
+        totalBoxs = 0,
+        totalTimeInTrip = 0
+    },
+    settings =
+    {
+        menuType = encodeJson({false, true, false, false, false}),
+        eatType = encodeJson({false, true, false}),
+        fillType = encodeJson({true, false, false}),
+        trailerType = encodeJson({false, true, false}),
+        settingsWidgetBool = false,
+        settingsAutoEatBool = false,
+        settingsPipBool = false,
+        settingsEngineControlBool = false,
+        settingsTimerArendaBool = false,
+        settingsAutoBuyBool = false,
+        settingsAutoFillBool = false,
+        settingsAutoBrakeBool = false,
+        settingsAutoDomkratBool = false,
+        settingsAutoSlagboumBool = false, 
+        settingsAutoReportBool = false, 
+        settingsPipFillBool = false, 
+        settingsPipFuelBool = false, 
+        settingsPipBoxBool = false, 
+        settingsOffChatBool = false,
+        settingsAutoTrailerBool = false,
+        sliderRepairCount = 5, 
+        sliderFillCount = 3, 
+        sliderDomkratCount = 1,
+        sendReportText = u8'РЇ РїРѕРїР°Р» РІ РІРѕРґСѓ, РїРѕРјРѕРіРёС‚Рµ',
+    },
+    settingsWidget =
+    {
+        widgetTransparrent = 1.00,
+        widgetShowType = encodeJson({true, false, false}),
+        widgetLinks = encodeJson({false, false, false, false, false, false, false, false, false, false})
+    }
+})
+
+iniDirectory = "DriverReborn.ini"
+iniMain = inicfg.load(mainIni, iniDirectory)
+iniState = inicfg.save(iniMain, iniDirectory)
+
+-- Dark Theme РґР»СЏ СЃРєСЂРёРїС‚Р°. РђРІС‚РѕСЂ: chapo (https://www.blast.hk/members/112329/)
 function m.DarkTheme()
     m.SwitchContext()
     --==[ STYLE ]==--
