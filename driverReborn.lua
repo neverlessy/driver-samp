@@ -24,6 +24,7 @@ local str, sizeof = ffi.string, ffi.sizeof
 local driverMenu, widgetMenu, settingsAutoTrailerBool, settingsWidgetBool, settingsAutoEatBool, settingsPipBool, settingsEngineControlBool, settingsTimerArendaBool, settingsAutoBuyBool, settingsAutoFillBool, settingsAutoBrakeBool, settingsAutoDomkratBool, settingsAutoSlagboumBool, settingsAutoReportBool, settingsPipFillBool, settingsPipFuelBool, settingsPipBoxBool, settingsOffChatBool = new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()
 local widgetLinks, menuType, eatType, fillType, trailerType, widgetShowType, dPlayers, dPlayerNick, dPlayerId, dPlayerNumber = {new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()}, {true, false, false, false, false}, {false, true, false}, {true, false, false}, {false, true, false}, {true, false, false}, {}, {}, {}, {}
 local widgetTransparrent, sendReportText, sliderRepairCount, sliderFillCount, sliderDomkratCount, loadDriverStatus = new.float(1.00), new.char[85](u8"Я попал в воду! Помогите!"), new.int(5), new.int(5), new.int(5), ''
+local languageStrings, currentLanguage = nil, 'RU'
 -- Код
 
 local driverWidgetMenuFrame = m.OnFrame(
@@ -39,34 +40,34 @@ local driverWidgetMenuFrame = m.OnFrame(
             m.CenterText(u8"RoadTrain") m.Separator()
                 m.BeginChild('WidgetMenu', v2(240, checkSizeWidget()), false)
                 if widgetLinks[1][0] then
-                    m.CenterText(u8"Взвешивание: Нет маршрута")
+                    m.CenterText(u8""..languageStrings["widgetLinks.weighing"]..': '..languageStrings["widgetLinks.weighing.status.noRoute"])
                 end
                 if widgetLinks[2][0] then
-                    m.CenterText(u8"Заработок: 0$")
+                    m.CenterText(u8""..languageStrings["widgetLinks.earning"])
                 end
                 if widgetLinks[3][0] then
-                    m.CenterText(u8"Маршрут: Нет маршрута")
+                    m.CenterText(u8""..languageStrings["widgetLinks.route"])
                 end
                 if widgetLinks[4][0] then
-                    m.CenterText(u8"Рейсов за сессию: 0")
+                    m.CenterText(u8""..languageStrings["widgetLinks.routesInSession"])
                 end
                 if widgetLinks[5][0] then
-                    m.CenterText(u8"Ларцов за сессию: 0")
+                    m.CenterText(u8""..languageStrings["widgetLinks.boxInSession"])
                 end
                 if widgetLinks[6][0] then
-                    m.CenterText(u8"Всего ларцов: 0")
+                    m.CenterText(u8""..languageStrings["widgetLinks.boxAll"])
                 end
                 if widgetLinks[7][0] then
-                    m.CenterText(u8"Всего рейсов: 0")
+                    m.CenterText(u8""..languageStrings["widgetLinks.routesAll"])
                 end
                 if widgetLinks[8][0] then
-                    m.CenterText(u8"Времени в рейсах: 00:00:00")
+                    m.CenterText(u8""..languageStrings["widgetLinks.timeInRoutesSession"])
                 end
                 if widgetLinks[9][0] then
-                    m.CenterText(u8"Времени в рейсах всего: 00:00:00")
+                    m.CenterText(u8""..languageStrings["widgetLinks.timeInRoutesAll"])
                 end
                 if widgetLinks[10][0] then
-                    m.CenterText(u8"Навык дальнобойщика: 0")
+                    m.CenterText(u8""..languageStrings["widgetLinks.truckerSkill"])
                 end
                 m.EndChild()
             m.Text('', cupoY(checkSizeWidget() + 10))
@@ -85,22 +86,22 @@ local driverMenuFrame = m.OnFrame(
         m.SetNextWindowSize(v2(750, 400), m.Cond.FirstUseEver)
         m.Begin("Main Window", driverMenu, flags.NoResize + flags.NoCollapse + flags.NoScrollbar + flags.NoTitleBar)
             m.BeginChild('#MenuBar', v2(200, 390), false)
-                if m.ButtonActivated(menuType[1], u8"О скрипте", v2(200, 50), cupoX(0)) then
+                if m.ButtonActivated(menuType[1], u8""..languageStrings["driverMenu.leftmenu.button1"], v2(200, 50), cupoX(0)) then
                     switchMenu(1)
                 end
-                if m.ButtonActivated(menuType[2], u8"Настройки", v2(200, 50), cupoX(0)) then
+                if m.ButtonActivated(menuType[2], u8""..languageStrings["driverMenu.leftmenu.button2"], v2(200, 50), cupoX(0)) then
                     switchMenu(2)
                 end
-                if m.ButtonActivated(menuType[3], u8"Лог рейсов", v2(200, 50), cupoX(0))  then
+                if m.ButtonActivated(menuType[3], u8""..languageStrings["driverMenu.leftmenu.button3"], v2(200, 50), cupoX(0))  then
                     switchMenu(3)
                 end
-                if m.ButtonActivated(menuType[4], u8"Дальнобойщики онлайн", v2(200, 50), cupoX(0)) then
+                if m.ButtonActivated(menuType[4], u8""..languageStrings["driverMenu.leftmenu.button4"], v2(200, 50), cupoX(0)) then
                     switchMenu(4)
                 end
-                if m.ButtonActivated(menuType[5], u8"Патчноут", v2(97, 50), cupoX(102), cupoY(340)) then
+                if m.ButtonActivated(menuType[5], u8""..languageStrings["driverMenu.leftmenu.button6"], v2(97, 50), cupoX(102), cupoY(340)) then
                     switchMenu(5)
                 end
-                if m.Button(u8"Закрыть", v2(97, 50), cupoX(0), cupoY(340)) then
+                if m.Button(u8""..languageStrings["driverMenu.leftmenu.button5"], v2(97, 50), cupoX(0), cupoY(340)) then
                     if menuType[4] then
                         switchMenu(1)
                     end
@@ -111,98 +112,97 @@ local driverMenuFrame = m.OnFrame(
             m.BeginChild('#Content', v2(535, 390), false)
                 if menuType[1] then
                     m.Image(logoDriver, v2(300, 300), cupoX(120))
-                    m.CenterText(u8'Автор: Moon Glance (neverlessy)')
-                    m.CenterText(u8'Текущая версия: 1.3.3')
-                    m.CenterText(u8'Текущий билд: 2211')
+                    m.CenterText(u8''..languageStrings["menuAbout.author"]..': Moon Glance')
+                    m.CenterText(u8''..languageStrings["menuAbout.currentVersion"]..': 1.3.3')
+                    m.CenterText(u8''..languageStrings["menuAbout.currentBuild"]..': 2211')
                 end
                 if menuType[2] then
-                    m.Checkbox(u8" Показ виджета", settingsWidgetBool)
+                    m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.showWidget"], settingsWidgetBool)
                         if settingsWidgetBool[0] then
-                            if m.Button(u8"Настройки виджета", v2(150,30), cupoX(25)) then
+                            if m.Button(u8""..languageStrings["menuSettings.button.settingsWidget"], v2(150,30), cupoX(25)) then
                                 m.OpenPopup('widgetSettings')
                             end
-                            m.Text(u8"Режим работы виджета", cupoX(25))
-                            if m.ButtonActivated(widgetShowType[1], u8"Всегда", v2(150,30), cupoX(25)) then
+                            m.Text(u8""..languageStrings["menuSettings.text.widgetMode"], cupoX(25))
+                            if m.ButtonActivated(widgetShowType[1], u8""..languageStrings["menuSettings.button.widgetMode_Always"], v2(150,30), cupoX(25)) then
                                 switchShowWidgetType(1)
                             end m.SameLine()
-                            if m.ButtonActivated(widgetShowType[2], u8"В грузовике", v2(150,30)) then
+                            if m.ButtonActivated(widgetShowType[2], u8""..languageStrings["menuSettings.button.widgetMode_inTruck"], v2(150,30)) then
                                 switchShowWidgetType(2)
                             end m.SameLine()
-                            if m.ButtonActivated(widgetShowType[3], u8"В рейсе", v2(150,30)) then
+                            if m.ButtonActivated(widgetShowType[3], u8""..languageStrings["menuSettings.button.widgetMode_inRoute"], v2(150,30)) then
                                 switchShowWidgetType(3)
                             end
                         end
-                    m.Checkbox(u8" Автоматическая еда", settingsAutoEatBool)
+                    m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoEat"], settingsAutoEatBool)
                         if settingsAutoEatBool[0] then
-                            if m.ButtonActivated(eatType[1], u8"Оленина", v2(150,30), cupoX(25)) then
+                            if m.ButtonActivated(eatType[1], u8""..languageStrings["menuSettings.button.eatType_Venison"], v2(150,30), cupoX(25)) then
                                 switchEatType(1)
                             end m.SameLine()
-                            if m.ButtonActivated(eatType[2], u8"Рыба", v2(150,30)) then
+                            if m.ButtonActivated(eatType[2], u8""..languageStrings["menuSettings.button.eatType_Fish"], v2(150,30)) then
                                 switchEatType(2)
                             end m.SameLine()
-                            if m.ButtonActivated(eatType[3], u8"Чипсы", v2(150,30)) then
+                            if m.ButtonActivated(eatType[3], u8""..languageStrings["menuSettings.button.eatType_Chips"], v2(150,30)) then
                                 switchEatType(3)
                             end
                         end
-                    if m.Checkbox(u8" Контроль двигателя", settingsEngineControlBool) then
+                    if m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.controlEngine"], settingsEngineControlBool) then
                         
                     end
-                    m.Checkbox(u8" Звуковое сопровождение", settingsPipBool)
+                    m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.soundPip"], settingsPipBool)
                         if settingsPipBool[0] then
-                            m.Checkbox(u8" Если рядом есть заправка", settingsPipFillBool, cupoX(25))
-                            m.Checkbox(u8" Если мало бензина", settingsPipFuelBool, cupoX(25))
-                            m.Checkbox(u8" Если выпал ларец", settingsPipBoxBool, cupoX(25))
+                            m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.soundPip.ifGas"], settingsPipFillBool, cupoX(25))
+                            m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.soundPip.ifFuel"], settingsPipFuelBool, cupoX(25))
+                            m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.soundPip.ifBox"], settingsPipBoxBool, cupoX(25))
                         end
-                    m.Checkbox(u8" Таймер аренды", settingsTimerArendaBool)
+                    m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.rentTimer"], settingsTimerArendaBool)
                         if settingsTimerArendaBool[0] then
-                            m.Button(u8"Настройки таймера", v2(150,30), cupoX(25))
+                            m.Button(u8""..languageStrings["menuSettings.button.rentTimer"], v2(150,30), cupoX(25))
                         end
-                    m.Checkbox(u8" Закупка", settingsAutoBuyBool)
+                    m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoBuy"], settingsAutoBuyBool)
                         if settingsAutoBuyBool[0] then
-                            m.SliderInt(u8' Наборы починки', sliderRepairCount, 1, 15, cupoX(25))
-                            m.SliderInt(u8' Канистры', sliderFillCount, 1, 15, cupoX(25))
-                            m.SliderInt(u8' Домкраты', sliderDomkratCount, 1, 15, cupoX(25))
-                            --sliderRepairCount, sliderFillCount, sliderDomkratCount
+                            m.SliderInt(u8' '..languageStrings["menuSettings.button.autoBuy_repKits"], sliderRepairCount, 1, 15, cupoX(25))
+                            m.SliderInt(u8' '..languageStrings["menuSettings.button.autoBuy_can"], sliderFillCount, 1, 15, cupoX(25))
+                            m.SliderInt(u8' '..languageStrings["menuSettings.button.autoBuy_jacks"], sliderDomkratCount, 1, 15, cupoX(25))
                         end
-                    m.Checkbox(u8" Заправка", settingsAutoFillBool)
+                    m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoFill"], settingsAutoFillBool)
                     if settingsAutoFillBool[0] then
-                        if m.ButtonActivated(fillType[1], u8"АИ-92", v2(150,30), cupoX(25)) then
+                        if m.ButtonActivated(fillType[1], u8""..languageStrings["menuSettings.button.autoFill_92"], v2(150,30), cupoX(25)) then
                             switchFillType(1)
                         end m.SameLine()
-                        if m.ButtonActivated(fillType[2], u8"АИ-95", v2(150,30)) then
+                        if m.ButtonActivated(fillType[2], u8""..languageStrings["menuSettings.button.autoFill_95"], v2(150,30)) then
                             switchFillType(2)
                         end m.SameLine()
-                        if m.ButtonActivated(fillType[3], u8"АИ-98", v2(150,30)) then
+                        if m.ButtonActivated(fillType[3], u8""..languageStrings["menuSettings.button.autoFill_98"], v2(150,30)) then
                             switchFillType(3)
                         end
                     end
-                    m.Checkbox(u8" Тормоз", settingsAutoBrakeBool)
-                    m.Checkbox(u8" Домкрат", settingsAutoDomkratBool)
-                    m.Checkbox(u8" Шлагбаум", settingsAutoSlagboumBool)
-                    m.Checkbox(u8" Прицеп", settingsAutoTrailerBool)
+                    m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoBrake"], settingsAutoBrakeBool)
+                    m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoLiftJack"], settingsAutoDomkratBool)
+                    m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoBarrier"], settingsAutoSlagboumBool)
+                    m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoTrailer"], settingsAutoTrailerBool)
                         if settingsAutoTrailerBool[0] then
-                            if m.ButtonActivated(trailerType[1], u8"Топливо", v2(150,30), cupoX(25)) then
+                            if m.ButtonActivated(trailerType[1], u8""..languageStrings["menuSettings.button.autoTrailer_Fuel"], v2(150,30), cupoX(25)) then
                                 switchTrailerType(1)
                             end m.SameLine()
-                            if m.ButtonActivated(trailerType[2], u8"Оружие", v2(150,30)) then
+                            if m.ButtonActivated(trailerType[2], u8""..languageStrings["menuSettings.button.autoTrailer_Guns"], v2(150,30)) then
                                 switchTrailerType(2)
                             end m.SameLine()
-                            if m.ButtonActivated(trailerType[3], u8"Продукты", v2(150,30)) then
+                            if m.ButtonActivated(trailerType[3], u8""..languageStrings["menuSettings.button.autoTrailer_Products"], v2(150,30)) then
                                 switchTrailerType(3)
                             end
                         end
-                    m.Checkbox(u8" Репорт при попадании в воду", settingsAutoReportBool)
+                    m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoReportInWater"], settingsAutoReportBool)
                         if settingsAutoReportBool[0] then
                             --m.Button(u8"Изменить текст", v2(150,30), cupoX(25))
-                            m.InputText(u8" - Текст при попадании", sendReportText, sizeof(sendReportText), cupoX(25))
+                            m.InputText(u8" - "..languageStrings["menuSettings.button.autoReport"], sendReportText, sizeof(sendReportText), cupoX(25))
                         end
-                    m.Checkbox(u8' Отключить чат дальнобойщиков', settingsOffChatBool)
+                    m.Checkbox(u8' '..languageStrings["menuSettings.checkbox.offChatTruckers"], settingsOffChatBool)
                 end
                 if menuType[4] then
                     displayRadar(true)
                     if dPlayers[2] == nil then
                         m.PushFont(fonts[25])
-                            m.CenterText(u8"Загрузка", cupoY(150))
+                            m.CenterText(u8""..languageStrings["driverListLoad.statusTitle"], cupoY(150))
                         m.PopFont()
                         m.PushFont(fonts[15])
                             m.CenterText(u8''..loadDriverStatus)
@@ -215,9 +215,9 @@ local driverMenuFrame = m.OnFrame(
                             m.SetColumnWidth(2, 250)
                             m.Text(u8'ID')
                             m.NextColumn()
-                            m.CenterColumnText(u8'Никнейм')
+                            m.CenterColumnText(u8''..languageStrings["driverList.nickname"])
                             m.NextColumn()
-                            m.CenterColumnText(u8'Номер телефона')
+                            m.CenterColumnText(u8''..languageStrings["driverList.number"])
                             for i = 2, #dPlayers do
                                 if dPlayerNick[i] ~= nil then
                                     m.NextColumn()
@@ -241,18 +241,18 @@ local driverMenuFrame = m.OnFrame(
                 end
                 if m.BeginPopup('widgetSettings') then
                         m.BeginChild('#Popip', v2(250, 305), false)
-                            m.Button(u8"Изменить положение", v2(250, 30))
-                            m.SliderFloat(u8' Прозрачность виджета', widgetTransparrent, 0.00, 1.00)
-                            if m.Checkbox(u8" Взвешивание", widgetLinks[1]) or
-                            m.Checkbox(u8" Заработок", widgetLinks[2]) or
-                            m.Checkbox(u8" Маршрут", widgetLinks[3]) or
-                            m.Checkbox(u8" Рейсы за сессию", widgetLinks[4]) or
-                            m.Checkbox(u8" Ларцы за сессию", widgetLinks[5]) or
-                            m.Checkbox(u8" Всего ларцов", widgetLinks[6]) or
-                            m.Checkbox(u8" Всего рейсов", widgetLinks[7]) or
-                            m.Checkbox(u8" Времени в рейсах", widgetLinks[8]) or
-                            m.Checkbox(u8" Времени в рейсах всего", widgetLinks[9]) or
-                            m.Checkbox(u8" Навык дальнобойщика", widgetLinks[10]) then
+                            m.Button(u8""..languageStrings["widgetSettings.changePos"], v2(250, 30))
+                            m.SliderFloat(u8' '..languageStrings["widgetSettings.transparrent"], widgetTransparrent, 0.00, 1.00)
+                            if m.Checkbox(u8" "..languageStrings["widgetSettings.weighing"], widgetLinks[1]) or
+                            m.Checkbox(u8" "..languageStrings["widgetSettings.earning"], widgetLinks[2]) or
+                            m.Checkbox(u8" "..languageStrings["widgetSettings.route"], widgetLinks[3]) or
+                            m.Checkbox(u8" "..languageStrings["widgetSettings.routesInSession"], widgetLinks[4]) or
+                            m.Checkbox(u8" "..languageStrings["widgetSettings.boxInSession"], widgetLinks[5]) or
+                            m.Checkbox(u8" "..languageStrings["widgetSettings.boxAll"], widgetLinks[6]) or
+                            m.Checkbox(u8" "..languageStrings["widgetSettings.routesAll"], widgetLinks[7]) or
+                            m.Checkbox(u8" "..languageStrings["widgetSettings.timeInRoutesSession"], widgetLinks[8]) or
+                            m.Checkbox(u8" "..languageStrings["widgetSettings.timeInRoutesAll"], widgetLinks[9]) or
+                            m.Checkbox(u8" "..languageStrings["widgetSettings.truckerSkill"], widgetLinks[10]) then
                                 saveConfig()
                                 checkSizeWidget()
                             end
@@ -359,6 +359,22 @@ function moonVec4(numberhex)
     return v4(tonumber(string.format("%.2f", r)), tonumber(string.format("%.2f", g)), tonumber(string.format("%.2f", b)), tonumber(string.format("%.2f", a)))
 end
 
+
+function jsonSave(jsonFilePath, t)
+    file = io.open(jsonFilePath, "w")
+    file:write(encodeJson(t))
+    file:flush()
+    file:close()
+end
+    
+function jsonRead(jsonFilePath)
+    local file = io.open(jsonFilePath, "r+")
+    local jsonInString = file:read("*a")
+    file:close()
+    local jsonTable = decodeJson(jsonInString)
+    return jsonTable
+end
+
 m.OnInitialize(function()
     m.DarkTheme()
     local config = m.ImFontConfig()
@@ -379,6 +395,7 @@ function main()
     if not isSampfuncsLoaded() or not isSampLoaded() then return end
     while not isSampAvailable() do wait(0) end
     sampAddChatMessage('Загружен', -1)
+    languageStrings = jsonRead(getWorkingDirectory() .. "/resource/Driver/language/"..currentLanguage..".json")
     driverMenu[0] = not driverMenu[0]
     updateReport()
     updateDriverPlayers()
@@ -397,7 +414,7 @@ function updateDriverPlayers()
     lua_thread.create(function()
         while true do wait(0)
             if menuType[4] then
-                loadDriverStatus = u8'Устанавливаю связь с космосом'
+                loadDriverStatus = u8''..languageStrings["driverListLoad.status.one"]
                 sampSendChat("/phone")
                 wait(500)
                 sampSendChat("/phone")
@@ -454,7 +471,7 @@ end
 
 function e.onShowDialog(id, style, title, button1, button2, text)
     if title:find("{%x+}Рабочие онлайн") and menuType[4] then
-        loadDriverStatus = u8'Уже почти...'
+        loadDriverStatus = u8''..languageStrings["driverListLoad.status.four"]
         dPlayers, dPlayerNick, dPlayerId, dPlayerNumber = {}, {}, {}, {}
         separator = '\n'
         for str in string.gmatch(text, "([^"..separator.."]+)") do
@@ -471,12 +488,12 @@ function e.onShowDialog(id, style, title, button1, button2, text)
     end
     if title:find("Меню") and menuType[4] then
         sampSendDialogResponse(id, 1 , 2, sampGetListboxItemText(2))
-        loadDriverStatus = u8'Взламываю пентагон'
+        loadDriverStatus = u8''..languageStrings["driverListLoad.status.two"]
         return false
     end
     if text:find("<< Дальнобойщики") and menuType[4] then
         sampSendDialogResponse(id, 1 , 28, sampGetListboxItemText(28))
-        loadDriverStatus = u8'Открываю базу данных NASA'
+        loadDriverStatus = u8''..languageStrings["driverListLoad.status.three"]
         return false
     end
     if title:find("{%x+}{%x+}Репорт") and settingsAutoReportBool[0] then
