@@ -20,12 +20,15 @@ local new, v2, v4, cupoX, cupoY, chatMessage, flags = m.new, m.ImVec2, m.ImVec4,
 -- Объявление других переменных
 enc.default = 'CP1251'
 local u8 = enc.UTF8
+local driverTag = '{8bdee4}[Driver]{b7b7b7} '
 local str, sizeof = ffi.string, ffi.sizeof
 local driverMenu, widgetMenu, settingsAutoTrailerBool, settingsWidgetBool, settingsAutoEatBool, settingsPipBool, settingsEngineControlBool, settingsTimerArendaBool, settingsAutoBuyBool, settingsAutoFillBool, settingsAutoBrakeBool, settingsAutoDomkratBool, settingsAutoSlagboumBool, settingsAutoReportBool, settingsPipFillBool, settingsPipFuelBool, settingsPipBoxBool, settingsOffChatBool = new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()
 local widgetLinks, menuType, eatType, fillType, trailerType, widgetShowType, dPlayers, dPlayerNick, dPlayerId, dPlayerNumber = {new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()}, {true, false, false, false, false}, {false, true, false}, {true, false, false}, {false, true, false}, {true, false, false}, {}, {}, {}, {}
 local widgetTransparrent, sendReportText, sliderRepairCount, sliderFillCount, sliderDomkratCount, loadDriverStatus = new.float(1.00), new.char[85](u8"Я попал в воду! Помогите!"), new.int(5), new.int(5), new.int(5), ''
 local languageStrings, currentLanguage = nil, nil
-local route = new.bool()
+
+local route, editingWidgetMode, widgetPosX, widgetPosY, satietyCheckTimer, satietyLevelSupport, satietyCheck, satietyVar = new.bool(), new.bool(), new.int(), new.int(), new.int(60), new.int(80), new.bool(), 0
+
 -- Код
 
 local driverWidgetMenuFrame = m.OnFrame(
@@ -35,7 +38,17 @@ local driverWidgetMenuFrame = m.OnFrame(
         m.PushStyleColor(m.Col.Text, v4(1.00, 1.00, 1.00, widgetTransparrent[0]))
         m.PushStyleColor(m.Col.Separator, v4(0.12, 0.12, 0.12, widgetTransparrent[0]))
         m.PushStyleColor(m.Col.Border, v4(0.25, 0.25, 0.26, widgetTransparrent[0]))
-        m.SetNextWindowPos(v2(200, 550), m.Cond.FirstUseEver, v2(0.5, 0.5))
+        if editingWidgetMode[0] then
+            m.SetNextWindowPos(v2(select(1, getCursorPos()) - 125, select(2, getCursorPos())), m.Cond.Always)
+            if isKeyJustPressed(32) then
+                sampAddChatMessage(driverTag..''..chatStrings["chatMessages.savedWidgetPosition"], -1)
+                widgetPosX[0], widgetPosY[0] = select(1, getCursorPos()) - 125, select(2, getCursorPos())
+                saveConfig()
+                editingWidgetMode[0] = false
+            end
+        else
+            m.SetNextWindowPos(v2(widgetPosX[0], widgetPosY[0]), m.Cond.Always)
+        end
         m.SetNextWindowSize(v2(250, checkSizeWidget() + 55), m.Cond.Always)
         m.Begin("widget", widgetMenu, flags.NoResize + flags.NoCollapse + flags.NoScrollbar + flags.NoTitleBar)
             m.CenterText(u8"RoadTrain") m.Separator()
@@ -76,7 +89,11 @@ local driverWidgetMenuFrame = m.OnFrame(
             m.CenterText(u8""..os.date("%X")..' | '..os.date("*t").day..'.'..os.date("*t").month..'.'..os.date("*t").year) 
         m.End()
         m.PopStyleColor(4)
-        player.HideCursor = true
+        if editingWidgetMode[0] then
+            player.HideCursor = false
+        else
+            player.HideCursor = true
+        end
     end
 )
 
@@ -139,15 +156,17 @@ local driverMenuFrame = m.OnFrame(
                         end
                     m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoEat"], settingsAutoEatBool)
                         if settingsAutoEatBool[0] then
+                            m.SliderInt(u8' '..languageStrings["menuSettings.autoEat.satietyCheckTimer"], satietyCheckTimer, 60, 300, cupoX(25))
+                            m.SliderInt(u8' '..languageStrings["menuSettings.autoEat.satietyLevelSupport"], satietyLevelSupport, 50, 100, cupoX(25))
                             if m.ButtonActivated(eatType[1], u8""..languageStrings["menuSettings.button.eatType_Venison"], v2(150,30), cupoX(25)) then
                                 switchEatType(1)
                             end m.SameLine()
                             if m.ButtonActivated(eatType[2], u8""..languageStrings["menuSettings.button.eatType_Fish"], v2(150,30)) then
                                 switchEatType(2)
-                            end m.SameLine()
-                            if m.ButtonActivated(eatType[3], u8""..languageStrings["menuSettings.button.eatType_Chips"], v2(150,30)) then
-                                switchEatType(3)
                             end
+                            --[[if m.ButtonActivated(eatType[3], u8""..languageStrings["menuSettings.button.eatType_Chips"], v2(150,30)) then
+                                switchEatType(3)
+                            end]]
                         end
                     if m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.controlEngine"], settingsEngineControlBool) then
                         
@@ -197,7 +216,6 @@ local driverMenuFrame = m.OnFrame(
                         end
                     m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoReportInWater"], settingsAutoReportBool)
                         if settingsAutoReportBool[0] then
-                            --m.Button(u8"Изменить текст", v2(150,30), cupoX(25))
                             m.InputText(u8" - "..languageStrings["menuSettings.button.autoReport"], sendReportText, sizeof(sendReportText), cupoX(25))
                         end
                     m.Checkbox(u8' '..languageStrings["menuSettings.checkbox.offChatTruckers"], settingsOffChatBool)
@@ -245,7 +263,15 @@ local driverMenuFrame = m.OnFrame(
                 end
                 if m.BeginPopup('widgetSettings') then
                         m.BeginChild('#Popip', v2(250, 305), false)
-                            m.Button(u8""..languageStrings["widgetSettings.changePos"], v2(250, 30))
+                            if m.Button(u8""..languageStrings["widgetSettings.changePos"], v2(250, 30)) then
+                                if widgetMenu[0] then
+                                    sampAddChatMessage(driverTag..''..chatStrings["chatMessages.startEditMode"], -1)
+                                    driverMenu[0] = false
+                                    editingWidgetMode[0] = true
+                                else
+                                    sampAddChatMessage(driverTag..''..chatStrings["chatMessages.turnWidget"], -1)
+                                end
+                            end
                             m.SliderFloat(u8' '..languageStrings["widgetSettings.transparrent"], widgetTransparrent, 0.00, 1.00)
                             if m.Checkbox(u8" "..languageStrings["widgetSettings.weighing"], widgetLinks[1]) or
                             m.Checkbox(u8" "..languageStrings["widgetSettings.earning"], widgetLinks[2]) or
@@ -282,7 +308,8 @@ local driverMenuFrame = m.OnFrame(
             end
             m.EndChild()
         m.End()
-        player.HideCursor = false
+        m.GetIO().MouseDrawCursor = 1
+        --player.HideCursor = true
     end
 )
 
@@ -378,6 +405,7 @@ end
 function selectLanguage(lang)
     currentLanguage = lang
     languageStrings = jsonRead(getWorkingDirectory() .. "/resource/Driver/language/"..currentLanguage..".json")
+    chatStrings = jsonRead(getWorkingDirectory() .. "/resource/Driver/language/CHAT_"..currentLanguage..".json")
     saveConfig()
 end
 
@@ -510,30 +538,58 @@ function main()
     loadConfig()
     sampAddChatMessage('Загружен', -1)
     languageStrings = jsonRead(getWorkingDirectory() .. "/resource/Driver/language/"..currentLanguage..".json")
-    updateReport() updateDriverPlayers() updateWidget()
+    chatStrings = jsonRead(getWorkingDirectory() .. "/resource/Driver/language/CHAT_"..currentLanguage..".json")
+    updateReport() updateDriverPlayers() updateWidget() updateSatiety()
     sampRegisterChatCommand('drive', pushTruck)
     while true do wait(0)
         if testCheat('dr') then driverMenu[0] = not driverMenu[0] end
     end
 end
 
+function updateSatiety()
+    lua_thread.create(function()
+        while settingsAutoEatBool[0] do wait(satietyCheckTimer[0] * 1000)
+            if settingsAutoEatBool[0] then
+                satietyCheck[0] = true
+                sampSendChat('/satiety')
+                while satietyCheck[0] do wait(3100)
+                    if satietyVar <= satietyLevelSupport[0] then
+                        if eatType[1] then
+                            sampSendChat('/jmeat')
+                        elseif eatType[2] then
+                            sampSendChat('/jfish')
+                        end
+                    else
+                        satietyCheck[0] = false
+                        break
+                    end
+                end
+            end
+        end
+    end)
+end
+
 function updateWidget()
     lua_thread.create(function()
-        while settingsWidgetBool[0] do wait(0)
-            if widgetShowType[1] then
-                widgetMenu[0] = true
-            elseif widgetShowType[2] then
-                if isCharInAnyCar(PLAYER_PED) and (getCarModel(storeCarCharIsInNoSave(PLAYER_PED)) == 403 or getCarModel(storeCarCharIsInNoSave(PLAYER_PED)) == 514 or getCarModel(storeCarCharIsInNoSave(PLAYER_PED)) == 515) then
+        while true do wait(0)
+            if settingsWidgetBool[0] then
+                if widgetShowType[1] then
                     widgetMenu[0] = true
-                else
-                    widgetMenu[0] = false
+                elseif widgetShowType[2] then
+                    if isCharInAnyCar(PLAYER_PED) and (getCarModel(storeCarCharIsInNoSave(PLAYER_PED)) == 403 or getCarModel(storeCarCharIsInNoSave(PLAYER_PED)) == 514 or getCarModel(storeCarCharIsInNoSave(PLAYER_PED)) == 515) then
+                        widgetMenu[0] = true
+                    else
+                        widgetMenu[0] = false
+                    end
+                elseif widgetShowType[3] then
+                    if route[0] then
+                        widgetMenu[0] = true
+                    else
+                        widgetMenu[0] = false
+                    end
                 end
-            elseif widgetShowType[3] then
-                if route[0] then
-                    widgetMenu[0] = true
-                else
-                    widgetMenu[0] = false
-                end
+            else
+                widgetMenu[0] = false
             end
         end
     end)
@@ -600,6 +656,23 @@ function e.onServerMessage(color, text)
             return {color, text}
         end
     end
+    if text:find(" скушал%Xа%X (.+)") then
+        sampAddChatMessage('a', -1)
+    end
+    if text:find("взять новый можно на одной из баз дальнобойщиков") then
+        endRoute(1)
+    end
+    if text:find("Сцепка произойдёт автоматически") then
+        startRoute()
+    end
+end
+
+function startRoute()
+    route[0] = true
+end
+
+function endRoute(reason)
+    route[0] = false
 end
 
 function e.onShowDialog(id, style, title, button1, button2, text)
@@ -633,8 +706,12 @@ function e.onShowDialog(id, style, title, button1, button2, text)
         sampSendDialogResponse(id, 1 , -1, u8:decode(str(sendReportText)))
         return false
     end
-    sampAddChatMessage(''..style, -1)
-    print(title)
+
+    if text:find("Ваша сытость: {......}%d+/%d+") and satietyCheck[0] then
+        satietyVar = tonumber(text:match("Ваша сытость: {......}(%d+)/%d+"))
+        sampSendDialogResponse(id, 0, -1, -1)
+        return false
+    end
 end
 
 -- Часть кофига
@@ -667,6 +744,8 @@ function loadConfig()
     widgetTransparrent[0] = iniMain.settingsWidget.widgetTransparrent
     widgetShowType = decodeJson(iniMain.settingsWidget.widgetShowType)
     currentLanguage = iniMain.settings.lang
+    widgetPosX[0] = iniMain.settingsWidget.widgetPosX
+    widgetPosY[0] = iniMain.settingsWidget.widgetPosY
     local widgetLinksLua = decodeJson(iniMain.settingsWidget.widgetLinks)
     for i = 1, 10 do
         widgetLinks[i][0] = widgetLinksLua[i]
@@ -701,6 +780,8 @@ function saveConfig()
     iniMain.settingsWidget.widgetTransparrent =widgetTransparrent[0]
     iniMain.settingsWidget.widgetShowType = encodeJson(widgetShowType)
     iniMain.settings.lang = currentLanguage
+    iniMain.settingsWidget.widgetPosX = widgetPosX[0]
+    iniMain.settingsWidget.widgetPosY = widgetPosY[0]
     local widgetLinksLuaSave = {}
     for i = 1, 10 do
         widgetLinksLuaSave[i] = widgetLinks[i][0]
@@ -750,7 +831,9 @@ local mainIni = inicfg.load({
     {
         widgetTransparrent = 1.00,
         widgetShowType = encodeJson({true, false, false}),
-        widgetLinks = encodeJson({false, false, false, false, false, false, false, false, false, false})
+        widgetLinks = encodeJson({false, false, false, false, false, false, false, false, false, false}),
+        widgetPosX = 100,
+        widgetPosY = 400
     }
 })
 

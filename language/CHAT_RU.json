@@ -1,0 +1,5 @@
+{
+    "chatMessages.savedWidgetPosition": "{f6185f}<Виджет> {b7b7b7} Позиция успешно сохранена",
+    "chatMessages.startEditMode": "{f6185f}<Виджет> {b7b7b7} Передвиньте виджет в удобное место и нажмите {f6185f}Space",
+    "chatMessages.turnWidget": "{f6185f}<Ошибка> {b7b7b7} Виджет должен быть видим"
+}
