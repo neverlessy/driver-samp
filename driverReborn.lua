@@ -24,7 +24,8 @@ local str, sizeof = ffi.string, ffi.sizeof
 local driverMenu, widgetMenu, settingsAutoTrailerBool, settingsWidgetBool, settingsAutoEatBool, settingsPipBool, settingsEngineControlBool, settingsTimerArendaBool, settingsAutoBuyBool, settingsAutoFillBool, settingsAutoBrakeBool, settingsAutoDomkratBool, settingsAutoSlagboumBool, settingsAutoReportBool, settingsPipFillBool, settingsPipFuelBool, settingsPipBoxBool, settingsOffChatBool = new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()
 local widgetLinks, menuType, eatType, fillType, trailerType, widgetShowType, dPlayers, dPlayerNick, dPlayerId, dPlayerNumber = {new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()}, {true, false, false, false, false}, {false, true, false}, {true, false, false}, {false, true, false}, {true, false, false}, {}, {}, {}, {}
 local widgetTransparrent, sendReportText, sliderRepairCount, sliderFillCount, sliderDomkratCount, loadDriverStatus = new.float(1.00), new.char[85](u8"Я попал в воду! Помогите!"), new.int(5), new.int(5), new.int(5), ''
-local languageStrings, currentLanguage = nil, 'RU'
+local languageStrings, currentLanguage = nil, nil
+local route = new.bool()
 -- Код
 
 local driverWidgetMenuFrame = m.OnFrame(
@@ -115,6 +116,9 @@ local driverMenuFrame = m.OnFrame(
                     m.CenterText(u8''..languageStrings["menuAbout.author"]..': Moon Glance')
                     m.CenterText(u8''..languageStrings["menuAbout.currentVersion"]..': 1.3.3')
                     m.CenterText(u8''..languageStrings["menuAbout.currentBuild"]..': 2211')
+                    if m.Button(u8""..languageStrings["menuAbout.button.lang"], v2(100,30), cupoX(430), cupoY(355)) then
+                        m.OpenPopup('languageSelect')
+                    end
                 end
                 if menuType[2] then
                     m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.showWidget"], settingsWidgetBool)
@@ -259,6 +263,23 @@ local driverMenuFrame = m.OnFrame(
                         m.EndChild()
                     m.EndPopup()
                 end
+                if m.BeginPopup('languageSelect') then
+                    m.BeginChild('#Popip', v2(150, 100), false)
+                    if m.Button(u8"Русский", v2(150,30)) then
+                        selectLanguage('RU')
+                        m.CloseCurrentPopup()
+                    end
+                    if m.Button(u8"Український", v2(150,30)) then
+                        selectLanguage('UA')
+                        m.CloseCurrentPopup()
+                    end
+                    if m.Button(u8"English", v2(150,30)) then
+                        selectLanguage('EN')
+                        m.CloseCurrentPopup()
+                    end
+                    m.EndChild()
+                m.EndPopup()
+            end
             m.EndChild()
         m.End()
         player.HideCursor = false
@@ -354,6 +375,98 @@ function switchShowWidgetType(newWidgetType)
     saveConfig()
 end 
 
+function selectLanguage(lang)
+    currentLanguage = lang
+    languageStrings = jsonRead(getWorkingDirectory() .. "/resource/Driver/language/"..currentLanguage..".json")
+    saveConfig()
+end
+
+function pushTruck()
+    lua_thread.create(function()
+        lockPlayerControl(true)
+        local data = samp_create_sync_data('player')
+        data.keysData = data.keysData + 1024
+        while true do wait(0)
+            if isKeyJustPressed(114) then
+                lockPlayerControl(false)
+                break
+            else
+                if not sampIsDialogActive() then
+                    data.send()
+                else
+                    if sampGetDialogCaption():find("{%x+}Выбор грузовика") then
+                        if sampGetCurrentDialogType() == 0 then
+                            sampSendDialogResponse(sampGetCurrentDialogId(), 1 , -1, -1)
+                            sampCloseCurrentDialogWithButton(1)
+                            lockPlayerControl(false)
+                            break
+                        elseif sampGetCurrentDialogType() == 5 then
+                            sampSendDialogResponse(sampGetCurrentDialogId(), 1 , 0, -1)
+                        end
+                    else
+                        data.send()
+                    end
+                end
+            end
+        end
+    end)
+end
+
+function samp_create_sync_data(sync_type, copy_from_player)
+    local ffi = require 'ffi'
+    local sampfuncs = require 'sampfuncs'
+    -- from SAMP.Lua
+    local raknet = require 'samp.raknet'
+    require 'samp.synchronization'
+ 
+    copy_from_player = copy_from_player or true
+    local sync_traits = {
+        player = {'PlayerSyncData', raknet.PACKET.PLAYER_SYNC, sampStorePlayerOnfootData},
+        vehicle = {'VehicleSyncData', raknet.PACKET.VEHICLE_SYNC, sampStorePlayerIncarData},
+        passenger = {'PassengerSyncData', raknet.PACKET.PASSENGER_SYNC, sampStorePlayerPassengerData},
+        aim = {'AimSyncData', raknet.PACKET.AIM_SYNC, sampStorePlayerAimData},
+        trailer = {'TrailerSyncData', raknet.PACKET.TRAILER_SYNC, sampStorePlayerTrailerData},
+        unoccupied = {'UnoccupiedSyncData', raknet.PACKET.UNOCCUPIED_SYNC, nil},
+        bullet = {'BulletSyncData', raknet.PACKET.BULLET_SYNC, nil},
+        spectator = {'SpectatorSyncData', raknet.PACKET.SPECTATOR_SYNC, nil}
+    }
+    local sync_info = sync_traits[sync_type]
+    local data_type = 'struct ' .. sync_info[1]
+    local data = ffi.new(data_type, {})
+    local raw_data_ptr = tonumber(ffi.cast('uintptr_t', ffi.new(data_type .. '*', data)))
+    -- copy player's sync data to the allocated memory
+    if copy_from_player then
+        local copy_func = sync_info[3]
+        if copy_func then
+            local _, player_id
+            if copy_from_player == true then
+                _, player_id = sampGetPlayerIdByCharHandle(PLAYER_PED)
+            else
+                player_id = tonumber(copy_from_player)
+            end
+            copy_func(player_id, raw_data_ptr)
+        end
+    end
+    -- function to send packet
+    local func_send = function()
+        local bs = raknetNewBitStream()
+        raknetBitStreamWriteInt8(bs, sync_info[2])
+        raknetBitStreamWriteBuffer(bs, raw_data_ptr, ffi.sizeof(data))
+        raknetSendBitStreamEx(bs, sampfuncs.HIGH_PRIORITY, sampfuncs.UNRELIABLE_SEQUENCED, 1)
+        raknetDeleteBitStream(bs)
+    end
+    -- metatable to access sync data and 'send' function
+    local mt = {
+        __index = function(t, index)
+            return data[index]
+        end,
+        __newindex = function(t, index, value)
+            data[index] = value
+        end
+    }
+    return setmetatable({send = func_send}, mt)
+end
+
 function moonVec4(numberhex)
     a, r, g, b = tonumber(string.sub(numberhex, 1, 2), 16) / 255, tonumber(string.sub(numberhex, 3, 4), 16) / 255, tonumber(string.sub(numberhex, 5, 6), 16) / 255, tonumber(string.sub(numberhex, 7, 8), 16) / 255
     return v4(tonumber(string.format("%.2f", r)), tonumber(string.format("%.2f", g)), tonumber(string.format("%.2f", b)), tonumber(string.format("%.2f", a)))
@@ -394,20 +507,36 @@ end)
 function main()
     if not isSampfuncsLoaded() or not isSampLoaded() then return end
     while not isSampAvailable() do wait(0) end
+    loadConfig()
     sampAddChatMessage('Загружен', -1)
     languageStrings = jsonRead(getWorkingDirectory() .. "/resource/Driver/language/"..currentLanguage..".json")
-    driverMenu[0] = not driverMenu[0]
-    updateReport()
-    updateDriverPlayers()
-    loadConfig()
+    updateReport() updateDriverPlayers() updateWidget()
+    sampRegisterChatCommand('drive', pushTruck)
     while true do wait(0)
-        if settingsWidgetBool[0] then
-            widgetMenu[0] = true
-        else
-            widgetMenu[0] = false
-        end
-        if testCheat('drv') then driverMenu[0] = not driverMenu[0] end
+        if testCheat('dr') then driverMenu[0] = not driverMenu[0] end
     end
+end
+
+function updateWidget()
+    lua_thread.create(function()
+        while settingsWidgetBool[0] do wait(0)
+            if widgetShowType[1] then
+                widgetMenu[0] = true
+            elseif widgetShowType[2] then
+                if isCharInAnyCar(PLAYER_PED) and (getCarModel(storeCarCharIsInNoSave(PLAYER_PED)) == 403 or getCarModel(storeCarCharIsInNoSave(PLAYER_PED)) == 514 or getCarModel(storeCarCharIsInNoSave(PLAYER_PED)) == 515) then
+                    widgetMenu[0] = true
+                else
+                    widgetMenu[0] = false
+                end
+            elseif widgetShowType[3] then
+                if route[0] then
+                    widgetMenu[0] = true
+                else
+                    widgetMenu[0] = false
+                end
+            end
+        end
+    end)
 end
 
 function updateDriverPlayers()
@@ -443,6 +572,10 @@ function e.onShowTextDraw(id, data)
         data.position.y = 100000.0
         return {id, data}
     elseif menuType[4] then
+        return false
+    end
+    -- Отмена затемнения при посадке в фуру
+    if data.position.x == -5 and data.position.y == -5 then
         return false
     end
 end
@@ -500,6 +633,8 @@ function e.onShowDialog(id, style, title, button1, button2, text)
         sampSendDialogResponse(id, 1 , -1, u8:decode(str(sendReportText)))
         return false
     end
+    sampAddChatMessage(''..style, -1)
+    print(title)
 end
 
 -- Часть кофига
@@ -531,7 +666,7 @@ function loadConfig()
     m.StrCopy(sendReportText, iniMain.settings.sendReportText)
     widgetTransparrent[0] = iniMain.settingsWidget.widgetTransparrent
     widgetShowType = decodeJson(iniMain.settingsWidget.widgetShowType)
-
+    currentLanguage = iniMain.settings.lang
     local widgetLinksLua = decodeJson(iniMain.settingsWidget.widgetLinks)
     for i = 1, 10 do
         widgetLinks[i][0] = widgetLinksLua[i]
@@ -565,7 +700,7 @@ function saveConfig()
     iniMain.settings.sendReportText = str(sendReportText)
     iniMain.settingsWidget.widgetTransparrent =widgetTransparrent[0]
     iniMain.settingsWidget.widgetShowType = encodeJson(widgetShowType)
-
+    iniMain.settings.lang = currentLanguage
     local widgetLinksLuaSave = {}
     for i = 1, 10 do
         widgetLinksLuaSave[i] = widgetLinks[i][0]
@@ -609,6 +744,7 @@ local mainIni = inicfg.load({
         sliderFillCount = 3, 
         sliderDomkratCount = 1,
         sendReportText = u8'Я попал в воду, помогите',
+        lang = 'UA'
     },
     settingsWidget =
     {
