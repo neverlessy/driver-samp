@@ -1,5 +1,5 @@
 {
-    "chatMessages.savedWidgetPosition": "{f6185f}<Р’РёРґР¶РµС‚> {b7b7b7} РџРѕР·РёС†РёСЏ СѓСЃРїРµС€РЅРѕ СЃРѕС…СЂР°РЅРµРЅР°",
-    "chatMessages.startEditMode": "{f6185f}<Р’РёРґР¶РµС‚> {b7b7b7} РџРµСЂРµРґРІРёРЅСЊС‚Рµ РІРёРґР¶РµС‚ РІ СѓРґРѕР±РЅРѕРµ РјРµСЃС‚Рѕ Рё РЅР°Р¶РјРёС‚Рµ {f6185f}Space",
-    "chatMessages.turnWidget": "{f6185f}<РћС€РёР±РєР°> {b7b7b7} Р’РёРґР¶РµС‚ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІРёРґРёРј"
+    "chatMessages.savedWidgetPosition": "{f6185f}<Виджет> {b7b7b7} Позиция успешно сохранена",
+    "chatMessages.startEditMode": "{f6185f}<Виджет> {b7b7b7} Передвиньте виджет в удобное место и нажмите {f6185f}Space",
+    "chatMessages.turnWidget": "{f6185f}<Ошибка> {b7b7b7} Виджет должен быть видим"
 }

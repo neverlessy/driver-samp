@@ -37,6 +37,7 @@
     "menuSettings.button.autoBuy_repKits": "Наборы починки",
     "menuSettings.button.autoBuy_can": "Канистры",
     "menuSettings.button.autoBuy_jacks": "Домкраты",
+    "menuSettings.button.autoFill_diesel": "Дизель",
     "menuSettings.button.autoFill_92": "АИ-92",
     "menuSettings.button.autoFill_95": "АИ-95",
     "menuSettings.button.autoFill_98": "АИ-98",
@@ -76,5 +77,8 @@
     "driverListLoad.status.three": "Открываю базу данных NASA",
     "driverListLoad.status.four": "Еще чуть-чуть...",
     "driverList.nickname": "Ник",
-    "driverList.number": "Телефон"
+    "driverList.number": "Телефон",
+    "menuSettings.autoEat.satietyCheckTimer": "Частота проверки",
+    "menuSettings.autoEat.satietyLevelSupport": "Поддержка сытости",
+    "menuSettings.slider.floodHwait": "Частота нажатия"
 }

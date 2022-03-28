@@ -76,5 +76,8 @@
     "driverListLoad.status.three": "Opening the NASA database",
     "driverListLoad.status.four": "Almost there...",
     "driverList.nickname": "Nickname",
-    "driverList.number": "Phone"
+    "driverList.number": "Phone",
+    "menuSettings.autoEat.satietyCheckTimer": "Receiving speed",
+    "menuSettings.autoEat.satietyLevelSupport": "Satiety support",
+    "menuSettings.slider.floodHwait": "Frequency of pressing"
 }

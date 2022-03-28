@@ -10,8 +10,8 @@ local inicfg = require 'inicfg'
 
 script_name('Driver Reborn')
 script_authors('Moon Glance', 'neverlessy')
-script_version('1.3.3')
-script_version_number(2211)
+script_version('1.3.4')
+script_version_number(2215)
 script_description('All rights reserved. © Moon Glance 2022')
 
 --  Объявление переменных для удобства кода согласно moongl.ru/coderules
@@ -20,15 +20,14 @@ local new, v2, v4, cupoX, cupoY, chatMessage, flags = m.new, m.ImVec2, m.ImVec4,
 -- Объявление других переменных
 enc.default = 'CP1251'
 local u8 = enc.UTF8
+local script = thisScript()
 local driverTag = '{8bdee4}[Driver]{b7b7b7} '
 local str, sizeof = ffi.string, ffi.sizeof
 local driverMenu, widgetMenu, settingsAutoTrailerBool, settingsWidgetBool, settingsAutoEatBool, settingsPipBool, settingsEngineControlBool, settingsTimerArendaBool, settingsAutoBuyBool, settingsAutoFillBool, settingsAutoBrakeBool, settingsAutoDomkratBool, settingsAutoSlagboumBool, settingsAutoReportBool, settingsPipFillBool, settingsPipFuelBool, settingsPipBoxBool, settingsOffChatBool = new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()
-local widgetLinks, menuType, eatType, fillType, trailerType, widgetShowType, dPlayers, dPlayerNick, dPlayerId, dPlayerNumber = {new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()}, {true, false, false, false, false}, {false, true, false}, {true, false, false}, {false, true, false}, {true, false, false}, {}, {}, {}, {}
+local widgetLinks, menuType, eatType, fillType, trailerType, widgetShowType, dPlayers, dPlayerNick, dPlayerId, dPlayerNumber = {new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()}, {true, false, false, false, false}, {false, true, false}, {true, false, false, false}, {false, true, false}, {true, false, false}, {}, {}, {}, {}
 local widgetTransparrent, sendReportText, sliderRepairCount, sliderFillCount, sliderDomkratCount, loadDriverStatus = new.float(1.00), new.char[85](u8"Я попал в воду! Помогите!"), new.int(5), new.int(5), new.int(5), ''
 local languageStrings, currentLanguage = nil, nil
-
-local route, editingWidgetMode, widgetPosX, widgetPosY, satietyCheckTimer, satietyLevelSupport, satietyCheck, satietyVar = new.bool(), new.bool(), new.int(), new.int(), new.int(60), new.int(80), new.bool(), 0
-
+local route, editingWidgetMode, widgetPosX, widgetPosY, satietyCheckTimer, satietyLevelSupport, satietyCheck, satietyVar, fillTypeTextdrawId, buttonFill, buttonNextFill, buttonPrevFill, buttonSelectPriceFill, fillTypeName, sliderAutoBarrierWait = new.bool(), new.bool(), new.int(), new.int(), new.int(60), new.int(80), new.bool(), 0, 0, 0, 0, 0, 0, '', new.int(10)
 -- Код
 
 local driverWidgetMenuFrame = m.OnFrame(
@@ -131,8 +130,8 @@ local driverMenuFrame = m.OnFrame(
                 if menuType[1] then
                     m.Image(logoDriver, v2(300, 300), cupoX(120))
                     m.CenterText(u8''..languageStrings["menuAbout.author"]..': Moon Glance')
-                    m.CenterText(u8''..languageStrings["menuAbout.currentVersion"]..': 1.3.3')
-                    m.CenterText(u8''..languageStrings["menuAbout.currentBuild"]..': 2211')
+                    m.CenterText(u8''..languageStrings["menuAbout.currentVersion"]..': '..script.this.version)
+                    m.CenterText(u8''..languageStrings["menuAbout.currentBuild"]..': '..script.this.version_num)
                     if m.Button(u8""..languageStrings["menuAbout.button.lang"], v2(100,30), cupoX(430), cupoY(355)) then
                         m.OpenPopup('languageSelect')
                     end
@@ -189,19 +188,25 @@ local driverMenuFrame = m.OnFrame(
                         end
                     m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoFill"], settingsAutoFillBool)
                     if settingsAutoFillBool[0] then
-                        if m.ButtonActivated(fillType[1], u8""..languageStrings["menuSettings.button.autoFill_92"], v2(150,30), cupoX(25)) then
+                        if m.ButtonActivated(fillType[1], u8""..languageStrings["menuSettings.button.autoFill_diesel"], v2(111,30), cupoX(25)) then
                             switchFillType(1)
                         end m.SameLine()
-                        if m.ButtonActivated(fillType[2], u8""..languageStrings["menuSettings.button.autoFill_95"], v2(150,30)) then
+                        if m.ButtonActivated(fillType[2], u8""..languageStrings["menuSettings.button.autoFill_92"], v2(111,30)) then
                             switchFillType(2)
                         end m.SameLine()
-                        if m.ButtonActivated(fillType[3], u8""..languageStrings["menuSettings.button.autoFill_98"], v2(150,30)) then
+                        if m.ButtonActivated(fillType[3], u8""..languageStrings["menuSettings.button.autoFill_95"], v2(111,30)) then
                             switchFillType(3)
+                        end m.SameLine()
+                        if m.ButtonActivated(fillType[4], u8""..languageStrings["menuSettings.button.autoFill_98"], v2(111,30)) then
+                            switchFillType(4)
                         end
                     end
                     m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoBrake"], settingsAutoBrakeBool)
                     m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoLiftJack"], settingsAutoDomkratBool)
                     m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoBarrier"], settingsAutoSlagboumBool)
+                    if settingsAutoSlagboumBool[0] then
+                        m.SliderInt(u8' '..languageStrings["menuSettings.slider.floodHwait"], sliderAutoBarrierWait, 10, 100, cupoX(25))
+                    end
                     m.Checkbox(u8" "..languageStrings["menuSettings.checkbox.autoTrailer"], settingsAutoTrailerBool)
                         if settingsAutoTrailerBool[0] then
                             if m.ButtonActivated(trailerType[1], u8""..languageStrings["menuSettings.button.autoTrailer_Fuel"], v2(150,30), cupoX(25)) then
@@ -255,10 +260,10 @@ local driverMenuFrame = m.OnFrame(
                 end
                 if menuType[5] then
                     m.PushFont(fonts[25])
-                        m.CenterText(u8"Обновление 1.3.2", cupoY(5))
+                        m.CenterText(u8"Обновление 1.3.4", cupoY(5))
                     m.PopFont()
                     m.PushFont(fonts[15])
-                        m.Text(u8"- Скрипт переписан с нуля\n- Обновлено что-то там", cupoX(15))
+                        m.Text(u8"- Обновлено что-то там", cupoX(15))
                     m.PopFont()
                 end
                 if m.BeginPopup('widgetSettings') then
@@ -373,7 +378,7 @@ function switchEatType(newEatType)
 end
 
 function switchFillType(newFillType)
-    for i = 1, 3 do
+    for i = 1, 4 do
         if i ~= newFillType then
             fillType[i] = false
         end
@@ -542,6 +547,10 @@ function main()
     updateReport() updateDriverPlayers() updateWidget() updateSatiety()
     sampRegisterChatCommand('drive', pushTruck)
     while true do wait(0)
+        if isKeyDown(88) then
+            setGameKeyState(18, 64)
+            wait(sliderAutoBarrierWait[0])
+        end
         if testCheat('dr') then driverMenu[0] = not driverMenu[0] end
     end
 end
@@ -634,6 +643,41 @@ function e.onShowTextDraw(id, data)
     if data.position.x == -5 and data.position.y == -5 then
         return false
     end
+    if textdrawPosX == 375 and textdrawPosY == 243 then
+        buttonFill = id
+    end
+    if textdrawPosX == 320 and textdrawPosY == 199 then
+        buttonSelectPriceFill = id
+    end
+    if textdrawPosX == 390 and textdrawPosY == 215 then
+        buttonNextFill = id
+    end
+    if textdrawPosX == 301 and textdrawPosY == 218 then
+        fillTypeName = id
+    end
+    
+    if data.text == 'DIESEL' or data.text == 'A-92' or data.text == 'A-95' or data.text == 'A-98' then
+        lua_thread.create(function()
+            local filln = ''
+            if fillType[1] then
+                filln = 'DIESEL'
+            elseif fillType[2] then
+                filln = 'A-92'
+            elseif fillType[3] then
+                filln = 'A-95'
+            elseif fillType[4] then
+                filln = 'A-98'
+            end
+            for i = 1, 4 do
+                if sampTextdrawGetString(fillTypeName) ~= filln then
+                    sampSendClickTextdraw(buttonNextFill)
+                    sampSendClickTextdraw(buttonSelectPriceFill)
+                    wait(100)
+                end
+            end
+            sampSendClickTextdraw(buttonFill)
+        end)
+    end
 end
 
 function e.onPlaySound(soundId, position)
@@ -664,6 +708,14 @@ function e.onServerMessage(color, text)
     end
     if text:find("Сцепка произойдёт автоматически") then
         startRoute()
+    end
+    --Автомобильное топливо успешно доставлено! Ваша зарплата за рейс: $115000.
+    --Audio stream: http://music.arizona-rp.com/gps/warning_beep_far_high.mp3
+end
+
+function e.onPlayAudioStream(url, pos, rad, userpos)
+    if url == 'http://music.arizona-rp.com/gps/warning_beep_far_high.mp3' then
+        return false
     end
 end
 

@@ -37,6 +37,7 @@
     "menuSettings.button.autoBuy_repKits": "Набори лагодження",
     "menuSettings.button.autoBuy_can": "Каністри",
     "menuSettings.button.autoBuy_jacks": "Домкрати",
+    "menuSettings.button.autoFill_diesel": "Дизель",
     "menuSettings.button.autoFill_92": "Паливо-92",
     "menuSettings.button.autoFill_95": "Паливо-95",
     "menuSettings.button.autoFill_98": "Паливо-98",
@@ -76,5 +77,8 @@
     "driverListLoad.status.three": "Відкриваю базу даних NASA",
     "driverListLoad.status.four": "Ще трохи ...",
     "driverList.nickname": "Нік",
-    "driverList.number": "Телефон"
+    "driverList.number": "Телефон",
+    "menuSettings.autoEat.satietyCheckTimer": "Частота перевірки",
+    "menuSettings.autoEat.satietyLevelSupport": "Підтримка ситості",
+    "menuSettings.slider.floodHwait": "Частота натискання"
 }
