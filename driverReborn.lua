@@ -11,7 +11,7 @@ local inicfg = require 'inicfg'
 script_name('Driver Reborn')
 script_authors('Moon Glance', 'neverlessy')
 script_version('1.3.4')
-script_version_number(2215)
+script_version_number(2216)
 script_description('All rights reserved. © Moon Glance 2022')
 
 --  Объявление переменных для удобства кода согласно moongl.ru/coderules
@@ -53,7 +53,7 @@ local driverWidgetMenuFrame = m.OnFrame(
             m.CenterText(u8"RoadTrain") m.Separator()
                 m.BeginChild('WidgetMenu', v2(240, checkSizeWidget()), false)
                 if widgetLinks[1][0] then
-                    m.CenterText(u8""..languageStrings["widgetLinks.weighing"]..': '..languageStrings["widgetLinks.weighing.status.noRoute"])
+                    m.CenterText(u8""..languageStrings["widgetLinks.weighing"]..': '..checkWeighing())
                 end
                 if widgetLinks[2][0] then
                     m.CenterText(u8""..languageStrings["widgetLinks.earning"])
@@ -578,6 +578,10 @@ function updateSatiety()
     end)
 end
 
+function checkWeighing()
+   
+end
+
 function updateWidget()
     lua_thread.create(function()
         while true do wait(0)
@@ -708,6 +712,16 @@ function e.onServerMessage(color, text)
     end
     if text:find("Сцепка произойдёт автоматически") then
         startRoute()
+        return false
+    end
+    if text:find("подцепите его грузовиком") then
+        return false
+    end
+    if text:find("Вы подцепили груз") then
+        return false
+    end
+    if text:find("{%x+}Во время рейса вам необходимо пройти весовой") then
+        return false
     end
     --Автомобильное топливо успешно доставлено! Ваша зарплата за рейс: $115000.
     --Audio stream: http://music.arizona-rp.com/gps/warning_beep_far_high.mp3
@@ -758,12 +772,37 @@ function e.onShowDialog(id, style, title, button1, button2, text)
         sampSendDialogResponse(id, 1 , -1, u8:decode(str(sendReportText)))
         return false
     end
-
     if text:find("Ваша сытость: {......}%d+/%d+") and satietyCheck[0] then
         satietyVar = tonumber(text:match("Ваша сытость: {......}(%d+)/%d+"))
         sampSendDialogResponse(id, 0, -1, -1)
         return false
     end
+    if title:find("{%x+}Выбор груза") and settingsAutoTrailerBool[0] then
+        pushTrailer()
+        return false
+    end
+end
+
+function pushTrailer()
+    if sampGetListboxItemText(0):find("%{BEF781%}") and trailerType[1] then
+        sampSendDialogResponse(sampGetCurrentDialogId(), 1, 0, -1)
+        sampAddChatMessage(driverTag..'Вы взяли прицеп с автомобильным топливом', -1)
+    elseif not sampGetListboxItemText(0):find("%{BEF781%}") and sampGetListboxItemText(1):find("%{BEF781%}") and (trailerType[1] or trailerType[2]) then
+        sampSendDialogResponse(sampGetCurrentDialogId(), 1, 1, -1)
+        if trailerType[2] then
+            sampAddChatMessage(driverTag..'Вы взяли прицеп с материалами для оружия', -1)
+        elseif trailerType[1] then
+            sampAddChatMessage(driverTag..'Поскольку небыло прицепа с топливом, был взят прицеп с материалами', -1)
+        end
+    elseif not sampGetListboxItemText(1):find("%{BEF781%}") and sampGetListboxItemText(2):find("%{BEF781%}") and (trailerType[1] or trailerType[2] or trailerType[3]) then
+        sampSendDialogResponse(sampGetCurrentDialogId(), 1, 2, -1)
+        if trailerType[3] then
+            sampAddChatMessage(driverTag..'Вы взяли прицеп с материалами для оружия', -1)
+        else
+            sampAddChatMessage(driverTag..'Поскольку других прицепов нет, был взят прицеп с продуктами', -1)
+        end
+    end
+    return true
 end
 
 -- Часть кофига
