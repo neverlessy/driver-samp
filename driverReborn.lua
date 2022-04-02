@@ -10,8 +10,8 @@ local inicfg = require 'inicfg'
 
 script_name('Driver Reborn')
 script_authors('Moon Glance', 'neverlessy')
-script_version('1.3.4')
-script_version_number(2216)
+script_version('1.3.5')
+script_version_number(2217)
 script_description('All rights reserved. © Moon Glance 2022')
 
 --  Объявление переменных для удобства кода согласно moongl.ru/coderules
@@ -27,7 +27,9 @@ local driverMenu, widgetMenu, settingsAutoTrailerBool, settingsWidgetBool, setti
 local widgetLinks, menuType, eatType, fillType, trailerType, widgetShowType, dPlayers, dPlayerNick, dPlayerId, dPlayerNumber = {new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool(), new.bool()}, {true, false, false, false, false}, {false, true, false}, {true, false, false, false}, {false, true, false}, {true, false, false}, {}, {}, {}, {}
 local widgetTransparrent, sendReportText, sliderRepairCount, sliderFillCount, sliderDomkratCount, loadDriverStatus = new.float(1.00), new.char[85](u8"Я попал в воду! Помогите!"), new.int(5), new.int(5), new.int(5), ''
 local languageStrings, currentLanguage = nil, nil
+local routes, routeTrip, statusWeighing = {"[LV] - [SF]", "[SF] - [LV]", "[LV] - [RCSD]", "[LS] - [SF]", "[SF] - [RCSD]", "[LS] - [LV]"}, u8"Неизвестно", u8'Не пройдено'
 local route, editingWidgetMode, widgetPosX, widgetPosY, satietyCheckTimer, satietyLevelSupport, satietyCheck, satietyVar, fillTypeTextdrawId, buttonFill, buttonNextFill, buttonPrevFill, buttonSelectPriceFill, fillTypeName, sliderAutoBarrierWait = new.bool(), new.bool(), new.int(), new.int(), new.int(60), new.int(80), new.bool(), 0, 0, 0, 0, 0, 0, '', new.int(10)
+local routesInSession, boxInSession, boxAll, routesAll, timeInRoutesSession, timeInRoutesAll, truckerSkill, earningInSession, currentTruck = 0,0,0,0,0,0,0,0, ''
 -- Код
 
 local driverWidgetMenuFrame = m.OnFrame(
@@ -44,43 +46,44 @@ local driverWidgetMenuFrame = m.OnFrame(
                 widgetPosX[0], widgetPosY[0] = select(1, getCursorPos()) - 125, select(2, getCursorPos())
                 saveConfig()
                 editingWidgetMode[0] = false
+                driverMenu[0] = true
             end
         else
             m.SetNextWindowPos(v2(widgetPosX[0], widgetPosY[0]), m.Cond.Always)
         end
         m.SetNextWindowSize(v2(250, checkSizeWidget() + 55), m.Cond.Always)
         m.Begin("widget", widgetMenu, flags.NoResize + flags.NoCollapse + flags.NoScrollbar + flags.NoTitleBar)
-            m.CenterText(u8"RoadTrain") m.Separator()
+            m.CenterText(u8""..getTruck()) m.Separator()
                 m.BeginChild('WidgetMenu', v2(240, checkSizeWidget()), false)
                 if widgetLinks[1][0] then
                     m.CenterText(u8""..languageStrings["widgetLinks.weighing"]..': '..checkWeighing())
                 end
                 if widgetLinks[2][0] then
-                    m.CenterText(u8""..languageStrings["widgetLinks.earning"])
+                    m.CenterText(u8""..languageStrings["widgetLinks.earning"]..': '..tostring(earningInSession)..' $')
                 end
                 if widgetLinks[3][0] then
-                    m.CenterText(u8""..languageStrings["widgetLinks.route"])
+                    m.CenterText(u8""..languageStrings["widgetLinks.route"]..': '..tostring(getRoute()))
                 end
                 if widgetLinks[4][0] then
-                    m.CenterText(u8""..languageStrings["widgetLinks.routesInSession"])
+                    m.CenterText(u8""..languageStrings["widgetLinks.routesInSession"]..': '..tostring(routesInSession))
                 end
                 if widgetLinks[5][0] then
-                    m.CenterText(u8""..languageStrings["widgetLinks.boxInSession"])
+                    m.CenterText(u8""..languageStrings["widgetLinks.boxInSession"]..': '..tostring(boxInSession))
                 end
                 if widgetLinks[6][0] then
-                    m.CenterText(u8""..languageStrings["widgetLinks.boxAll"])
+                    m.CenterText(u8""..languageStrings["widgetLinks.boxAll"]..': '..tostring(boxAll))
                 end
                 if widgetLinks[7][0] then
-                    m.CenterText(u8""..languageStrings["widgetLinks.routesAll"])
+                    m.CenterText(u8""..languageStrings["widgetLinks.routesAll"]..': '..tostring(routesAll))
                 end
                 if widgetLinks[8][0] then
-                    m.CenterText(u8""..languageStrings["widgetLinks.timeInRoutesSession"])
+                    m.CenterText(u8""..languageStrings["widgetLinks.timeInRoutesSession"]..': '..tostring(timeInRoutesSession))
                 end
                 if widgetLinks[9][0] then
-                    m.CenterText(u8""..languageStrings["widgetLinks.timeInRoutesAll"])
+                    m.CenterText(u8""..languageStrings["widgetLinks.timeInRoutesAll"]..': '..tostring(timeInRoutesAll))
                 end
                 if widgetLinks[10][0] then
-                    m.CenterText(u8""..languageStrings["widgetLinks.truckerSkill"])
+                    m.CenterText(u8""..languageStrings["widgetLinks.truckerSkill"]..': '..tostring(truckerSkill))
                 end
                 m.EndChild()
             m.Text('', cupoY(checkSizeWidget() + 10))
@@ -260,7 +263,7 @@ local driverMenuFrame = m.OnFrame(
                 end
                 if menuType[5] then
                     m.PushFont(fonts[25])
-                        m.CenterText(u8"Обновление 1.3.4", cupoY(5))
+                        m.CenterText(u8"Обновление 1.3.5", cupoY(5))
                     m.PopFont()
                     m.PushFont(fonts[15])
                         m.Text(u8"- Обновлено что-то там", cupoX(15))
@@ -541,11 +544,11 @@ function main()
     if not isSampfuncsLoaded() or not isSampLoaded() then return end
     while not isSampAvailable() do wait(0) end
     loadConfig()
-    sampAddChatMessage('Загружен', -1)
     languageStrings = jsonRead(getWorkingDirectory() .. "/resource/Driver/language/"..currentLanguage..".json")
     chatStrings = jsonRead(getWorkingDirectory() .. "/resource/Driver/language/CHAT_"..currentLanguage..".json")
     updateReport() updateDriverPlayers() updateWidget() updateSatiety()
     sampRegisterChatCommand('drive', pushTruck)
+    sampAddChatMessage(driverTag..''..chatStrings["chatMessages.scriptLoad"], -1)
     while true do wait(0)
         if isKeyDown(88) then
             setGameKeyState(18, 64)
@@ -579,7 +582,7 @@ function updateSatiety()
 end
 
 function checkWeighing()
-   
+    return statusWeighing
 end
 
 function updateWidget()
@@ -704,11 +707,13 @@ function e.onServerMessage(color, text)
             return {color, text}
         end
     end
-    if text:find(" скушал%Xа%X (.+)") then
-        sampAddChatMessage('a', -1)
-    end
     if text:find("взять новый можно на одной из баз дальнобойщиков") then
         endRoute(1)
+    end
+    if text:find("Ваша зарплата за рейс") then
+        local earmoney = text:match("(%d+)")
+        earningInSession = earningInSession + tonumber(earmoney)
+        endRoute(2)
     end
     if text:find("Сцепка произойдёт автоматически") then
         startRoute()
@@ -722,6 +727,12 @@ function e.onServerMessage(color, text)
     end
     if text:find("{%x+}Во время рейса вам необходимо пройти весовой") then
         return false
+    end
+    if text:find("Взвешивание началось") then
+        statusWeighing = u8'В процессе'
+    end
+    if text:find("Взвешивание завершено") then
+        statusWeighing = u8'Пройдено'
     end
     --Автомобильное топливо успешно доставлено! Ваша зарплата за рейс: $115000.
     --Audio stream: http://music.arizona-rp.com/gps/warning_beep_far_high.mp3
@@ -738,7 +749,101 @@ function startRoute()
 end
 
 function endRoute(reason)
+    if reason == 2 then
+        routesInSession = routesInSession + 1
+        boxInSession = boxInSession + 1
+        boxAll = boxAll + 1
+        routesAll = routesAll + 1
+        timeInRoutesSession = timeInRoutesSession + 1
+        timeInRoutesAll = timeInRoutesAll + 1
+        saveConfig()
+    end
+    statusWeighing = u8'Не пройдено'
     route[0] = false
+end
+
+function getCarNamebyModel(model)
+    local names = {
+        [403] = 'Linerunner',
+        [514] = 'Tanker',
+        [515] = 'Roadtrain',
+	    [12725] = 'Actros',
+        [12740] = 'Volvo'
+    }
+    return names[model]
+end
+
+function getRoute()
+    if isPlayerPlaying(PLAYER_HANDLE) then
+        local posX, posY, posZ = getCharCoordinates(playerPed)
+        local res, x, y, z = SearchMarker(posX, posY, posZ, 150.0, false)
+        local routeCur
+        if x ~= 1348 or x ~= 1342 then
+            if math.floor(x) == 1387 or math.floor(y) == 1181 or math.floor(z) == 9 then
+                local a, b = math.modf(x)
+                if b == 0.54833984375 then
+                    routeCur = routes[3]
+                elseif b == 0.989013671875 then
+                    routeCur = routes[1]
+                else
+                    routeTrip = u8"1"
+                end
+            elseif math.floor(x) == -2249 or math.floor(y) == 304 or math.floor(z) == 33 then
+                routeCur = routes[2]
+            elseif math.floor(x) == 2187 or math.floor(y) == -2659 or math.floor(z) == 12 then
+                routeCur = routes[4]
+            elseif math.floor(x) == -2254 or math.floor(y) == 233 or math.floor(z) == 33 then
+                routeCur = routes[5]
+            elseif math.floor(x) == 2227 or math.floor(y) == -2636 or math.floor(z) == 11 then
+                routeCur = routes[6]
+            end
+        end
+    end
+	if routeCur == nil then
+		routeCur = u8"Неизвестно"
+	end
+	return routeCur
+end
+
+function SearchMarker(posX, posY, posZ, radius, isRace)
+    local ret_posX = 0.0
+    local ret_posY = 0.0
+    local ret_posZ = 0.0
+	local radius = 250
+    local isFind = false
+
+    for id = 0, 31 do
+        local MarkerStruct = 0
+        if isRace then MarkerStruct = 0xC7F168 + id * 56
+        else MarkerStruct = 0xC7DD88 + id * 160 end
+        local MarkerPosX = representIntAsFloat(readMemory(MarkerStruct + 0, 4, false))
+        local MarkerPosY = representIntAsFloat(readMemory(MarkerStruct + 4, 4, false))
+        local MarkerPosZ = representIntAsFloat(readMemory(MarkerStruct + 8, 4, false))
+
+        if MarkerPosX ~= 0.0 or MarkerPosY ~= 0.0 or MarkerPosZ ~= 0.0 then
+            if getDistanceBetweenCoords3d(MarkerPosX, MarkerPosY, MarkerPosZ, posX, posY, posZ) < radius then
+                ret_posX = MarkerPosX
+                ret_posY = MarkerPosY
+                ret_posZ = MarkerPosZ
+                isFind = true
+                radius = getDistanceBetweenCoords3d(MarkerPosX, MarkerPosY, MarkerPosZ, posX, posY, posZ)
+            end
+		end
+    end
+
+    return isFind, ret_posX, ret_posY, ret_posZ
+end
+
+function getTruck()
+    if isCharInAnyCar(PLAYER_PED) then
+		currentTruck = getCarNamebyModel(getCarModel(storeCarCharIsInNoSave(PLAYER_PED)))
+		if currentTruck == nil then
+			currentTruck = u8"В машине"
+		end
+	else
+		currentTruck = u8"Нет транспорта"
+	end
+	return currentTruck
 end
 
 function e.onShowDialog(id, style, title, button1, button2, text)
@@ -778,28 +883,35 @@ function e.onShowDialog(id, style, title, button1, button2, text)
         return false
     end
     if title:find("{%x+}Выбор груза") and settingsAutoTrailerBool[0] then
-        pushTrailer()
-        return false
+        if pushTrailer() then
+            return false
+        end
     end
 end
 
 function pushTrailer()
-    if sampGetListboxItemText(0):find("%{BEF781%}") and trailerType[1] then
+    local trailersCount = {}
+    for i = 0, 2 do
+        if sampGetListboxItemText(i):find("{BEF781}") then
+            trailersCount[i+1] = true
+        end
+    end
+    if trailersCount[1] and trailerType[1] then
         sampSendDialogResponse(sampGetCurrentDialogId(), 1, 0, -1)
-        sampAddChatMessage(driverTag..'Вы взяли прицеп с автомобильным топливом', -1)
-    elseif not sampGetListboxItemText(0):find("%{BEF781%}") and sampGetListboxItemText(1):find("%{BEF781%}") and (trailerType[1] or trailerType[2]) then
+        sampAddChatMessage(driverTag..''..chatStrings["chatMessages.pickupFuelTrailer"], -1)
+    elseif trailersCount[2] and trailerType[2] then
         sampSendDialogResponse(sampGetCurrentDialogId(), 1, 1, -1)
         if trailerType[2] then
-            sampAddChatMessage(driverTag..'Вы взяли прицеп с материалами для оружия', -1)
+            sampAddChatMessage(driverTag..''..chatStrings["chatMessages.pickupGunsTrailer"], -1)
         elseif trailerType[1] then
-            sampAddChatMessage(driverTag..'Поскольку небыло прицепа с топливом, был взят прицеп с материалами', -1)
+            sampAddChatMessage(driverTag..''..chatStrings["chatMessages.pickupElseOne"], -1)
         end
-    elseif not sampGetListboxItemText(1):find("%{BEF781%}") and sampGetListboxItemText(2):find("%{BEF781%}") and (trailerType[1] or trailerType[2] or trailerType[3]) then
+    else
         sampSendDialogResponse(sampGetCurrentDialogId(), 1, 2, -1)
         if trailerType[3] then
-            sampAddChatMessage(driverTag..'Вы взяли прицеп с материалами для оружия', -1)
+            sampAddChatMessage(driverTag..''..chatStrings["chatMessages.pickupProductsTrailer"], -1)
         else
-            sampAddChatMessage(driverTag..'Поскольку других прицепов нет, был взят прицеп с продуктами', -1)
+            sampAddChatMessage(driverTag..''..chatStrings["chatMessages.pickupElseTwo"], -1)
         end
     end
     return true
@@ -837,6 +949,9 @@ function loadConfig()
     currentLanguage = iniMain.settings.lang
     widgetPosX[0] = iniMain.settingsWidget.widgetPosX
     widgetPosY[0] = iniMain.settingsWidget.widgetPosY
+    timeInRoutesAll = iniMain.driverStats.timeInRoutesAll
+    boxAll = iniMain.driverStats.boxAll
+    routesAll = iniMain.driverStats.routesAll
     local widgetLinksLua = decodeJson(iniMain.settingsWidget.widgetLinks)
     for i = 1, 10 do
         widgetLinks[i][0] = widgetLinksLua[i]
@@ -873,6 +988,9 @@ function saveConfig()
     iniMain.settings.lang = currentLanguage
     iniMain.settingsWidget.widgetPosX = widgetPosX[0]
     iniMain.settingsWidget.widgetPosY = widgetPosY[0]
+    iniMain.driverStats.timeInRoutesAll = timeInRoutesAll
+    iniMain.driverStats.boxAll = boxAll
+    iniMain.driverStats.routesAll = routesAll
     local widgetLinksLuaSave = {}
     for i = 1, 10 do
         widgetLinksLuaSave[i] = widgetLinks[i][0]
@@ -886,9 +1004,9 @@ end
 local mainIni = inicfg.load({
     driverStats =
     {
-        totalTrailers = 0,
-        totalBoxs = 0,
-        totalTimeInTrip = 0
+        timeInRoutesAll = 0,
+        boxAll = 0,
+        routesAll = 0,
     },
     settings =
     {
@@ -916,7 +1034,7 @@ local mainIni = inicfg.load({
         sliderFillCount = 3, 
         sliderDomkratCount = 1,
         sendReportText = u8'Я попал в воду, помогите',
-        lang = 'UA'
+        lang = 'RU'
     },
     settingsWidget =
     {
